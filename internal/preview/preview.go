@@ -2,14 +2,15 @@ package preview
 
 import (
 	"encoding/base64"
-	"errors"
-	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 	"unicode/utf8"
+
+	"lantransfer/internal/i18n"
 )
 
 const (
@@ -19,24 +20,24 @@ const (
 )
 
 type Info struct {
-	Path       string   `json:"path"`
-	Name       string   `json:"name"`
-	Kind       string   `json:"kind"`
-	MIME       string   `json:"mime"`
-	Size       int64    `json:"size"`
-	Modified   string   `json:"modified"`
-	DataURL    string   `json:"data_url,omitempty"`
-	Text       string   `json:"text,omitempty"`
-	Truncated  bool     `json:"truncated,omitempty"`
-	EntryCount int      `json:"entry_count,omitempty"`
-	Entries    []string `json:"entries,omitempty"`
-	Message    string   `json:"message,omitempty"`
+	Path       string    `json:"path"`
+	Name       string    `json:"name"`
+	Kind       string    `json:"kind"`
+	MIME       string    `json:"mime"`
+	Size       int64     `json:"size"`
+	Modified   string    `json:"modified"`
+	DataURL    string    `json:"data_url,omitempty"`
+	Text       string    `json:"text,omitempty"`
+	Truncated  bool      `json:"truncated,omitempty"`
+	EntryCount int       `json:"entry_count,omitempty"`
+	Entries    []string  `json:"entries,omitempty"`
+	Message    *i18n.Msg `json:"message,omitempty"`
 }
 
 func Load(path string) (Info, error) {
 	clean := filepath.Clean(strings.TrimSpace(path))
 	if clean == "." || clean == "" {
-		return Info{}, errors.New("brak ścieżki do podglądu")
+		return Info{}, i18n.New("err.preview.noPath")
 	}
 
 	stat, err := os.Stat(clean)
@@ -48,7 +49,7 @@ func Load(path string) (Info, error) {
 		Path:     clean,
 		Name:     stat.Name(),
 		Size:     stat.Size(),
-		Modified: stat.ModTime().Format("2006-01-02 15:04:05"),
+		Modified: stat.ModTime().Format(time.RFC3339),
 	}
 
 	if stat.IsDir() {
@@ -110,7 +111,7 @@ func loadFile(path string, info Info) (Info, error) {
 	case strings.HasPrefix(mime, "image/"):
 		info.Kind = "image"
 		if info.Size > maxInlineBytes {
-			info.Message = "Plik obrazu jest za duży na szybki podgląd w aplikacji."
+			info.Message = message("preview.imageTooLarge")
 			return info, nil
 		}
 		data, err := os.ReadFile(path)
@@ -123,7 +124,7 @@ func loadFile(path string, info Info) (Info, error) {
 	case mime == "application/pdf":
 		info.Kind = "pdf"
 		if info.Size > maxInlineBytes {
-			info.Message = "PDF jest za duży na szybki podgląd w aplikacji."
+			info.Message = message("preview.pdfTooLarge")
 			return info, nil
 		}
 		data, err := os.ReadFile(path)
@@ -145,9 +146,14 @@ func loadFile(path string, info Info) (Info, error) {
 
 	default:
 		info.Kind = "file"
-		info.Message = "Dla tego typu pliku dostępne są informacje, ale nie podgląd zawartości."
+		info.Message = message("preview.noContentPreview")
 		return info, nil
 	}
+}
+
+func message(key string) *i18n.Msg {
+	m := i18n.M(key)
+	return &m
 }
 
 func readText(path string) (string, bool, error) {
@@ -168,7 +174,7 @@ func readText(path string) (string, bool, error) {
 	}
 	text := string(buffer[:n])
 	if !utf8.ValidString(text) {
-		return "", false, fmt.Errorf("plik nie zawiera tekstu UTF-8")
+		return "", false, i18n.New("err.preview.notUTF8")
 	}
 	return text, truncated, nil
 }

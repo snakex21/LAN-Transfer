@@ -14,6 +14,8 @@
 // dir=1 for an (empty) directory entry.
 package protocol
 
+import "lantransfer/internal/i18n"
+
 const (
 	Version = 2
 
@@ -55,10 +57,14 @@ type UploadResponse struct {
 	SavedAs string `json:"saved_as"`
 }
 
-// ErrorResponse is returned with every non-2xx status.
+// ErrorResponse is returned with every non-2xx status. Error is English text
+// (for older peers and logs); Key and Params (added in 2.1, optional) let the
+// sender show the message in its own UI language.
 type ErrorResponse struct {
-	Error string `json:"error"`
-	Code  string `json:"code,omitempty"`
+	Error  string      `json:"error"`
+	Code   string      `json:"code,omitempty"`
+	Key    string      `json:"key,omitempty"`
+	Params i18n.Params `json:"params,omitempty"`
 }
 
 // Machine-readable error codes.

@@ -16,6 +16,7 @@ type State struct {
 	ID         string
 	Name       string
 	ReceiveDir string
+	Language   LanguageInfo
 
 	Identity *security.Identity
 	Pairing  *security.Pairing

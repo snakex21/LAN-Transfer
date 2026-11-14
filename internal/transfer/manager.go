@@ -3,10 +3,10 @@ package transfer
 import (
 	"context"
 	"errors"
-	"fmt"
 	"sync"
 	"time"
 
+	"lantransfer/internal/i18n"
 	"lantransfer/internal/protocol"
 )
 
@@ -20,6 +20,7 @@ type Job struct {
 	Dest       string
 	Status     string
 	Error      string
+	ErrorMsg   *i18n.Msg
 	Created    time.Time
 	Started    time.Time
 	Finished   time.Time
@@ -42,6 +43,7 @@ type JobView struct {
 	Dest       string         `json:"dest"`
 	Status     string         `json:"status"`
 	Error      string         `json:"error,omitempty"`
+	ErrorMsg   *i18n.Msg      `json:"error_msg,omitempty"`
 	TotalBytes int64          `json:"total_bytes"`
 	TotalFiles int            `json:"total_files"`
 	DoneBytes  int64          `json:"done_bytes"`
@@ -131,7 +133,7 @@ func (m *Manager) Enqueue(paths []string, address, dest string) ([]string, error
 	for _, path := range paths {
 		plan, err := PlanPath(path, address, dest)
 		if err != nil {
-			return ids, fmt.Errorf("%s: %w", path, err)
+			return ids, i18n.Wrap(err, "err.withPath", "path", path, "error", err)
 		}
 		job := &Job{
 			ID: plan.ID, Name: plan.Name, Source: plan.Source, Address: address, PeerName: session.PeerName,
@@ -183,7 +185,7 @@ func (m *Manager) Retry(id string) error {
 	job := m.jobs[id]
 	if job == nil {
 		m.mu.Unlock()
-		return errors.New("nie ma takiego transferu")
+		return i18n.New("err.noSuchTransfer")
 	}
 	source, address, dest := job.Source, job.Address, job.Dest
 	m.mu.Unlock()
@@ -216,7 +218,7 @@ func (m *Manager) Snapshot() []JobView {
 		job := m.jobs[id]
 		v := JobView{
 			ID: job.ID, Name: job.Name, Source: job.Source, Peer: job.PeerName, Address: job.Address, Dest: job.Dest,
-			Status: job.Status, Error: job.Error, TotalBytes: job.TotalBytes, TotalFiles: job.TotalFiles,
+			Status: job.Status, Error: job.Error, ErrorMsg: job.ErrorMsg, TotalBytes: job.TotalBytes, TotalFiles: job.TotalFiles,
 			DoneBytes: job.progress.DoneBytes.Load(), DoneFiles: job.progress.DoneFiles.Load(),
 			Resumed: job.progress.Resumed.Load(), Active: job.progress.Active(),
 		}
@@ -276,17 +278,18 @@ func (m *Manager) run(job *Job) {
 		job.Status = StatusDone
 	case errors.Is(err, context.Canceled):
 		job.Status = StatusCancelled
-		job.Error = "anulowano – wyślij ponownie, aby wznowić"
+		job.ErrorMsg = i18n.Payload(i18n.New("job.cancelledResume"))
+		job.Error = i18n.Render(i18n.Current(), *job.ErrorMsg)
 	default:
 		job.Status = StatusFailed
-		job.Error = err.Error()
+		job.Error, job.ErrorMsg = err.Error(), i18n.Payload(err)
 		if errors.Is(err, ErrNotPaired) {
 			delete(m.sessions, job.Address)
 		}
 	}
 	entry := HistoryEntry{
 		Direction: "sent", Name: job.Name, Peer: job.PeerName, Bytes: job.progress.DoneBytes.Load(),
-		Files: int(job.progress.DoneFiles.Load()), Status: job.Status, Error: job.Error,
+		Files: int(job.progress.DoneFiles.Load()), Status: job.Status, Error: job.Error, ErrorMsg: job.ErrorMsg,
 		Started: job.Started, Finished: job.Finished, Location: job.Source, JobID: job.ID,
 	}
 	m.mu.Unlock()

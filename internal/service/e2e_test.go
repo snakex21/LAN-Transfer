@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"lantransfer/internal/app"
+	"lantransfer/internal/i18n"
 	"lantransfer/internal/protocol"
 	"lantransfer/internal/security"
 	"lantransfer/internal/service"
@@ -374,8 +375,33 @@ func TestDiskFullIsReportedClearly(t *testing.T) {
 	writeRandom(t, src, 1<<20)
 	_, _, err := send(t, s, src, "")
 	var remote *transfer.RemoteError
-	if !errors.As(err, &remote) || remote.Code != protocol.CodeNoSpace || !strings.Contains(err.Error(), "miejsca") {
+	if !errors.As(err, &remote) || remote.Code != protocol.CodeNoSpace || remote.Key != "err.notEnoughSpace" {
 		t.Fatalf("expected no_space error, got %v", err)
+	}
+	// The receiver sends key + parameters, so the sender shows the message in
+	// its own language with its own number format, whatever the receiver uses.
+	msg := i18n.MsgOf(err)
+	if msg.Key != "err.withPath" {
+		t.Fatalf("expected the file name around the remote error, got %+v", msg)
+	}
+	for lang, want := range map[string]string{
+		"en": "za_duzy.bin: not enough space on the receiver's disk (needed 1 MB, free 10 MB)",
+		"pl": "za_duzy.bin: za mało miejsca na dysku odbiorcy (potrzeba 1 MB, wolne 10 MB)",
+	} {
+		if got := i18n.Render(lang, msg); got != want {
+			t.Errorf("%s: %q, want %q", lang, got, want)
+		}
+	}
+}
+
+func TestPairingErrorsAreTranslatable(t *testing.T) {
+	p := startPeer(t, nil)
+	_, err := transfer.Pair(context.Background(), p.address, "000000", senderInfo())
+	if msg := i18n.MsgOf(err); msg.Key != "err.wrongCode" {
+		t.Fatalf("wrong code: %+v (%v)", msg, err)
+	}
+	if got := i18n.Render("pl", i18n.MsgOf(err)); got != "nieprawidłowy kod parowania" {
+		t.Fatalf("pl: %q", got)
 	}
 }
 

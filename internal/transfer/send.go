@@ -19,6 +19,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"lantransfer/internal/i18n"
 	"lantransfer/internal/protocol"
 )
 
@@ -63,7 +64,7 @@ func PlanPath(path, address, dest string) (*Plan, error) {
 
 	if !info.IsDir() {
 		if !info.Mode().IsRegular() {
-			return nil, fmt.Errorf("%s nie jest zwykłym plikiem", abs)
+			return nil, i18n.New("err.notRegularFile", "path", abs)
 		}
 		plan.Entries = []Entry{{Source: abs, Rel: plan.Name, Size: info.Size()}}
 		plan.TotalBytes, plan.TotalFiles = info.Size(), 1
@@ -188,7 +189,8 @@ func (s *Session) Send(ctx context.Context, plan *Plan, dest string, parallel in
 		q.Set("path", e.Rel)
 		q.Set("dir", "1")
 		if _, err := s.upload(ctx, q, eofReader{}, func() string { return "" }); err != nil {
-			return fmt.Errorf("%s: %w", e.Rel, wrapConnError(err))
+			err = wrapConnError(err)
+			return i18n.Wrap(err, "err.withPath", "path", e.Rel, "error", err)
 		}
 	}
 
@@ -202,7 +204,7 @@ func (s *Session) Send(ctx context.Context, plan *Plan, dest string, parallel in
 			defer wg.Done()
 			for e := range jobs {
 				if err := s.sendFileWithRetry(ctx, base, e, progress); err != nil {
-					cancel(fmt.Errorf("%s: %w", e.Rel, err))
+					cancel(i18n.Wrap(err, "err.withPath", "path", e.Rel, "error", err))
 					return
 				}
 				progress.DoneFiles.Add(1)
@@ -289,7 +291,7 @@ func (s *Session) sendFile(ctx context.Context, base url.Values, e Entry, progre
 		return err
 	}
 	if info.Size() != e.Size {
-		return fmt.Errorf("plik zmienił się podczas wysyłania (%s → %s)", FormatBytes(e.Size), FormatBytes(info.Size()))
+		return i18n.New("err.fileChanged", "before", e.Size, "after", info.Size())
 	}
 
 	hasher := sha256.New()

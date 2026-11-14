@@ -11,6 +11,8 @@ import (
 	"strings"
 	"unicode"
 	"unicode/utf8"
+
+	"lantransfer/internal/i18n"
 )
 
 // MaxNameBytes limits a single path component (NTFS/ext4 limit is 255 units).
@@ -20,7 +22,7 @@ const MaxNameBytes = 255
 const MaxDepth = 64
 
 // ErrUnsafeName is wrapped by every rejection so callers can map it to 400.
-var ErrUnsafeName = errors.New("niebezpieczna nazwa pliku")
+var ErrUnsafeName = i18n.New("err.unsafeName")
 
 var reservedNames = map[string]bool{
 	"CON": true, "PRN": true, "AUX": true, "NUL": true, "CONIN$": true, "CONOUT$": true,
@@ -38,19 +40,19 @@ var reservedNames = map[string]bool{
 func CheckName(name string) error {
 	switch {
 	case name == "" || name == "." || name == "..":
-		return fmt.Errorf("%w: %q", ErrUnsafeName, name)
+		return i18n.Wrap(ErrUnsafeName, "err.name.invalid", "name", name)
 	case len(name) > MaxNameBytes:
-		return fmt.Errorf("%w: nazwa dłuższa niż %d bajtów", ErrUnsafeName, MaxNameBytes)
+		return i18n.Wrap(ErrUnsafeName, "err.name.tooLong", "max", MaxNameBytes)
 	case !utf8.ValidString(name):
-		return fmt.Errorf("%w: nieprawidłowe UTF-8", ErrUnsafeName)
+		return i18n.Wrap(ErrUnsafeName, "err.name.badUTF8")
 	case strings.ContainsAny(name, `<>:"/\|?*`):
-		return fmt.Errorf("%w: %q zawiera znak niedozwolony w Windows", ErrUnsafeName, name)
+		return i18n.Wrap(ErrUnsafeName, "err.name.forbiddenChar", "name", name)
 	case strings.HasSuffix(name, ".") || strings.HasSuffix(name, " "):
-		return fmt.Errorf("%w: %q kończy się kropką lub spacją", ErrUnsafeName, name)
+		return i18n.Wrap(ErrUnsafeName, "err.name.trailingDot", "name", name)
 	}
 	for _, r := range name {
 		if r < 0x20 || r == 0x7f || unicode.IsControl(r) {
-			return fmt.Errorf("%w: %q zawiera znak sterujący", ErrUnsafeName, name)
+			return i18n.Wrap(ErrUnsafeName, "err.name.control", "name", fmt.Sprintf("%q", name))
 		}
 	}
 	stem := name
@@ -58,7 +60,7 @@ func CheckName(name string) error {
 		stem = stem[:dot]
 	}
 	if reservedNames[strings.ToUpper(strings.TrimRight(stem, " "))] {
-		return fmt.Errorf("%w: %q to zarezerwowana nazwa urządzenia Windows", ErrUnsafeName, name)
+		return i18n.Wrap(ErrUnsafeName, "err.name.reserved", "name", name)
 	}
 	return nil
 }
@@ -70,17 +72,17 @@ func CheckName(name string) error {
 // destination folder.
 func CleanRelPath(rel string) (string, error) {
 	if rel == "" {
-		return "", fmt.Errorf("%w: pusta ścieżka", ErrUnsafeName)
+		return "", i18n.Wrap(ErrUnsafeName, "err.path.empty")
 	}
 	if strings.Contains(rel, `\`) {
-		return "", fmt.Errorf("%w: używaj '/' jako separatora", ErrUnsafeName)
+		return "", i18n.Wrap(ErrUnsafeName, "err.path.backslash")
 	}
 	if path.IsAbs(rel) || filepath.IsAbs(rel) || filepath.VolumeName(rel) != "" {
-		return "", fmt.Errorf("%w: ścieżka bezwzględna %q", ErrUnsafeName, rel)
+		return "", i18n.Wrap(ErrUnsafeName, "err.path.absolute", "path", rel)
 	}
 	parts := strings.Split(rel, "/")
 	if len(parts) > MaxDepth {
-		return "", fmt.Errorf("%w: zbyt głęboka struktura folderów", ErrUnsafeName)
+		return "", i18n.Wrap(ErrUnsafeName, "err.path.tooDeep", "max", MaxDepth)
 	}
 	for _, part := range parts {
 		if err := CheckName(part); err != nil {

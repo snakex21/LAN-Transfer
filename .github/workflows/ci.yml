@@ -28,7 +28,7 @@ jobs:
       - name: build
         shell: bash
         run: |
-          V="-X lantransfer/internal/version.Version=2.0.0-ci.${GITHUB_RUN_NUMBER}"
+          V="-X lantransfer/internal/version.Version=2.1.0-ci.${GITHUB_RUN_NUMBER}"
           go build -trimpath -ldflags="-s -w $V -H windowsgui" -o LANTransfer.exe .
           go build -trimpath -ldflags="-s -w $V" -o LANTransferCLI.exe .
           ./LANTransferCLI.exe version
@@ -48,7 +48,7 @@ jobs:
         with:
           go-version-file: go.mod
       - run: go build ./...
-      - run: go test -count=1 ./internal/fsafe/ ./internal/security/ ./internal/service/ ./internal/cli/ ./internal/discovery/ ./internal/networksetup/
+      - run: go test -count=1 ./internal/fsafe/ ./internal/security/ ./internal/service/ ./internal/cli/ ./internal/discovery/ ./internal/networksetup/ ./internal/i18n/
 
   readme:
     # README.md and the 29 translations in README/ must stay in sync
@@ -60,3 +60,19 @@ jobs:
         with:
           python-version: "3.12"
       - run: python tools/check_readmes.py
+
+  i18n:
+    # locales/ui.<code>.json: same keys, placeholders, plural forms and no
+    # leftover Polish in all 30 languages; the page runtime (i18n.js) is
+    # tested with the real catalogs in Node.js (same Intl/CLDR as WebView2).
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: python tools/check_i18n.py
+      - run: node tools/test_i18n.js

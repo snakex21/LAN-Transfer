@@ -4,11 +4,12 @@ import (
 	"crypto/rand"
 	"crypto/subtle"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"math/big"
 	"sync"
 	"time"
+
+	"lantransfer/internal/i18n"
 )
 
 const (
@@ -24,8 +25,8 @@ const (
 )
 
 var (
-	ErrWrongCode = errors.New("nieprawidłowy kod parowania")
-	ErrLocked    = errors.New("zbyt wiele błędnych prób parowania, spróbuj ponownie za minutę")
+	ErrWrongCode = i18n.New("err.wrongCode")
+	ErrLocked    = i18n.New("err.locked")
 )
 
 // Peer describes a sender that proved knowledge of the pairing code.

@@ -2,12 +2,12 @@
 
 package filebrowser
 
-import "errors"
+import "lantransfer/internal/i18n"
 
 func PickFiles() ([]string, error) {
-	return nil, errors.New("systemowe okno wyboru plików jest obecnie dostępne tylko w Windows")
+	return nil, i18n.New("err.pickerWindowsOnly")
 }
 
 func PickFolder() (string, error) {
-	return "", errors.New("systemowe okno wyboru folderu jest obecnie dostępne tylko w Windows")
+	return "", i18n.New("err.pickerWindowsOnly")
 }

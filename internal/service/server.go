@@ -17,6 +17,7 @@ import (
 	"lantransfer/internal/config"
 	"lantransfer/internal/discovery"
 	"lantransfer/internal/filebrowser"
+	"lantransfer/internal/i18n"
 	"lantransfer/internal/protocol"
 	"lantransfer/internal/security"
 	"lantransfer/internal/transfer"
@@ -88,16 +89,16 @@ func pairHandler(state *app.State) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		var request protocol.PairRequest
 		if err := json.NewDecoder(io.LimitReader(req.Body, 4096)).Decode(&request); err != nil {
-			transfer.WriteError(w, http.StatusBadRequest, "", "nieprawidłowe żądanie parowania")
+			transfer.WriteError(w, http.StatusBadRequest, "", i18n.M("err.badPairRequest"))
 			return
 		}
 		host, _, _ := net.SplitHostPort(req.RemoteAddr)
 		token, err := state.Pairing.Pair(host, request.Code, security.Peer{DeviceID: request.DeviceID, Name: limit(request.Name, 64)})
 		switch {
 		case errors.Is(err, security.ErrLocked):
-			transfer.WriteError(w, http.StatusTooManyRequests, "locked", err.Error())
+			transfer.WriteError(w, http.StatusTooManyRequests, "locked", i18n.MsgOf(err))
 		case err != nil:
-			transfer.WriteError(w, http.StatusForbidden, "wrong_code", err.Error())
+			transfer.WriteError(w, http.StatusForbidden, "wrong_code", i18n.MsgOf(err))
 		default:
 			transfer.WriteJSON(w, protocol.PairResponse{Token: token, Name: state.Name})
 		}
@@ -110,7 +111,7 @@ func requirePairing(pairing *security.Pairing) func(http.Handler) http.Handler {
 			token, ok := strings.CutPrefix(req.Header.Get("Authorization"), "Bearer ")
 			peer, authorized := pairing.Authorize(token)
 			if !ok || !authorized {
-				transfer.WriteError(w, http.StatusUnauthorized, protocol.CodeUnauthorized, "wymagane parowanie kodem")
+				transfer.WriteError(w, http.StatusUnauthorized, protocol.CodeUnauthorized, i18n.M("err.pairingRequired"))
 				return
 			}
 			name := peer.Name
@@ -125,7 +126,7 @@ func requirePairing(pairing *security.Pairing) func(http.Handler) http.Handler {
 func browseHandler(w http.ResponseWriter, req *http.Request) {
 	listing, err := filebrowser.Browse(req.URL.Query().Get("path"))
 	if err != nil {
-		transfer.WriteError(w, http.StatusBadRequest, "", err.Error())
+		transfer.WriteError(w, http.StatusBadRequest, "", i18n.MsgOf(err))
 		return
 	}
 	transfer.WriteJSON(w, listing)

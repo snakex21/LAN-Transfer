@@ -1,11 +1,12 @@
 package filebrowser
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"lantransfer/internal/i18n"
 )
 
 func Browse(path string) (Listing, error) {
@@ -23,7 +24,7 @@ func Browse(path string) (Listing, error) {
 		return Listing{}, err
 	}
 	if !info.IsDir() {
-		return Listing{}, fmt.Errorf("%q nie jest folderem", clean)
+		return Listing{}, i18n.New("err.notAFolder", "path", clean)
 	}
 
 	items, err := os.ReadDir(clean)

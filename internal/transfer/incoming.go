@@ -5,6 +5,8 @@ import (
 	"sort"
 	"sync"
 	"time"
+
+	"lantransfer/internal/i18n"
 )
 
 type peerKey struct{}
@@ -35,6 +37,7 @@ type IncomingJob struct {
 	Current    string    `json:"current"`
 	Directory  string    `json:"directory"`
 	Error      string    `json:"error,omitempty"`
+	ErrorMsg   *i18n.Msg `json:"error_msg,omitempty"`
 	Started    time.Time `json:"started"`
 	Updated    time.Time `json:"updated"`
 	Speed      float64   `json:"speed"`
@@ -79,7 +82,7 @@ func (t *IncomingTracker) start(peer string, f *fileRequest) func(int64) {
 	t.mu.Lock()
 	job := t.job(peer, f)
 	job.Current = f.rel
-	job.Error = ""
+	job.Error, job.ErrorMsg = "", nil
 	// A resumed file already has `offset` bytes on disk; forget whatever an
 	// earlier, interrupted attempt counted beyond that.
 	job.DoneBytes += f.offset - job.files[f.rel]
@@ -120,18 +123,18 @@ func (t *IncomingTracker) fileDone(peer string, f *fileRequest) bool {
 	}
 	t.mu.Unlock()
 	if finished {
-		t.record(job, StatusDone, "")
+		t.record(job, StatusDone, nil)
 	}
 	return finished
 }
 
-func (t *IncomingTracker) failed(peer string, f *fileRequest, msg string) {
+func (t *IncomingTracker) failed(peer string, f *fileRequest, msg i18n.Msg) {
 	if t == nil {
 		return
 	}
 	t.mu.Lock()
 	job := t.job(peer, f)
-	job.Error = msg
+	job.Error, job.ErrorMsg = i18n.Render(i18n.Current(), msg), &msg
 	job.Updated = t.now()
 	t.mu.Unlock()
 }
@@ -158,9 +161,10 @@ func (t *IncomingTracker) Snapshot() []IncomingJob {
 	}
 	t.mu.Unlock()
 	for _, job := range stale {
-		msg := job.Error
-		if msg == "" {
-			msg = "nadawca przestał wysyłać dane"
+		msg := job.ErrorMsg
+		if msg == nil {
+			stopped := i18n.M("incoming.senderStopped")
+			msg = &stopped
 		}
 		t.record(job, StatusInterrupted, msg)
 	}
@@ -168,14 +172,18 @@ func (t *IncomingTracker) Snapshot() []IncomingJob {
 	return result
 }
 
-func (t *IncomingTracker) record(job *IncomingJob, status, msg string) {
+func (t *IncomingTracker) record(job *IncomingJob, status string, msg *i18n.Msg) {
 	if t.History == nil {
 		return
 	}
-	t.History.Add(HistoryEntry{
+	entry := HistoryEntry{
 		Direction: "received", Name: job.Name, Peer: job.Peer, Bytes: job.DoneBytes, Files: job.DoneFiles,
-		Status: status, Error: msg, Started: job.Started, Finished: t.now(), Location: job.Directory,
-	})
+		Status: status, Started: job.Started, Finished: t.now(), Location: job.Directory,
+	}
+	if msg != nil {
+		entry.Error, entry.ErrorMsg = i18n.Render(i18n.Current(), *msg), msg
+	}
+	t.History.Add(entry)
 }
 
 // speedMeter computes a smoothed transfer rate in bytes per second.

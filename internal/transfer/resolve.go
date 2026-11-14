@@ -1,14 +1,13 @@
 package transfer
 
 import (
-	"errors"
-	"fmt"
 	"net"
 	"strings"
 	"time"
 
 	"lantransfer/internal/config"
 	"lantransfer/internal/discovery"
+	"lantransfer/internal/i18n"
 	"lantransfer/internal/netutil"
 )
 
@@ -21,7 +20,7 @@ func ResolveTarget(target, selfID string) (string, error) {
 	}
 	if ip := net.ParseIP(host); ip != nil {
 		if !config.Loopback && netutil.IsLocalIPv4(ip) {
-			return "", errors.New("nie można wysyłać plików do tego samego komputera")
+			return "", i18n.New("err.sameComputer")
 		}
 		return config.TargetAddress(target), nil
 	}
@@ -35,5 +34,5 @@ func ResolveTarget(target, selfID string) (string, error) {
 			return device.Address(), nil
 		}
 	}
-	return "", fmt.Errorf("nie znaleziono urządzenia %q", target)
+	return "", i18n.New("err.deviceNotFound", "name", target)
 }

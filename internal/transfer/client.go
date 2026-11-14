@@ -15,28 +15,44 @@ import (
 	"time"
 
 	"lantransfer/internal/filebrowser"
+	"lantransfer/internal/i18n"
 	"lantransfer/internal/protocol"
 	"lantransfer/internal/security"
 )
 
 // ErrNotPaired is returned when the receiver does not accept our token.
-var ErrNotPaired = errors.New("to urządzenie wymaga sparowania kodem")
+var ErrNotPaired = i18n.New("err.notPaired")
 
 // ErrOldPeer means the peer still runs the unencrypted version 1 protocol.
-var ErrOldPeer = errors.New("odbiorca używa starszej wersji LAN Transfer (bez szyfrowania) – zaktualizuj program na obu komputerach")
+var ErrOldPeer = i18n.New("err.oldPeer")
 
 // RemoteError is a JSON error returned by the receiver.
 type RemoteError struct {
 	Status int
 	Code   string
-	Msg    string
+	Msg    string      // text sent by the receiver (English since 2.1)
+	Key    string      // translation key (2.1+ receivers)
+	Params i18n.Params // its parameters
 }
 
-func (e *RemoteError) Error() string {
-	if e.Msg == "" {
-		return fmt.Sprintf("odbiorca zwrócił HTTP %d", e.Status)
+func (e *RemoteError) Error() string { return i18n.Render(i18n.Current(), e.Message()) }
+
+// Message is the translatable form: the receiver's key when it sent one,
+// otherwise a key derived from the error code, otherwise its text.
+func (e *RemoteError) Message() i18n.Msg {
+	switch {
+	case e.Key != "":
+		return i18n.Msg{Key: e.Key, Params: e.Params}
+	case e.Code == "wrong_code":
+		return i18n.M("err.wrongCode")
+	case e.Code == "locked":
+		return i18n.M("err.locked")
+	case e.Code == protocol.CodeChecksum:
+		return i18n.M("err.checksum")
+	case e.Msg == "":
+		return i18n.M("err.remoteHTTP", "status", fmt.Sprint(e.Status))
 	}
-	return e.Msg
+	return i18n.Text(e.Msg)
 }
 
 // Session is an authenticated connection to one receiver.
@@ -90,7 +106,7 @@ func Pair(ctx context.Context, address, code string, self protocol.Info) (*Sessi
 		return nil, wrapConnError(err)
 	}
 	if response.Token == "" || seen == "" {
-		return nil, errors.New("odbiorca nie zwrócił tokenu parowania")
+		return nil, i18n.New("err.noToken")
 	}
 	return &Session{
 		Address: address, Token: response.Token, Fingerprint: seen, PeerName: response.Name,
@@ -201,7 +217,7 @@ func decodeResponse(resp *http.Response, out any) error {
 		if e.Error == "" {
 			e.Error = strings.TrimSpace(string(data))
 		}
-		return &RemoteError{Status: resp.StatusCode, Code: e.Code, Msg: e.Error}
+		return &RemoteError{Status: resp.StatusCode, Code: e.Code, Msg: e.Error, Key: e.Key, Params: e.Params}
 	}
 	if out == nil {
 		return nil
@@ -216,14 +232,21 @@ func wrapConnError(err error) error {
 	}
 	msg := err.Error()
 	switch {
-	case errors.Is(err, ErrNotPaired), errors.Is(err, security.ErrFingerprintMismatch):
+	case errors.Is(err, ErrNotPaired):
+		return err
+	case errors.Is(err, security.ErrFingerprintMismatch):
+		// Drop the "Post https://…: tls: …" wrapping, keep the localized message.
+		var loc i18n.Localized
+		if i18n.AsLocalized(err, &loc) {
+			return loc
+		}
 		return err
 	case strings.Contains(msg, "server gave HTTP response to HTTPS client"),
 		strings.Contains(msg, "first record does not look like a TLS handshake"):
 		return ErrOldPeer
 	case strings.Contains(msg, "connection refused"), strings.Contains(msg, "actively refused"),
 		strings.Contains(msg, "No connection could be made"):
-		return fmt.Errorf("odbiorca nie odpowiada – czy LAN Transfer jest uruchomiony? (%w)", err)
+		return i18n.Wrap(err, "err.peerNotResponding", "error", err.Error())
 	}
 	var remote *RemoteError
 	if errors.As(err, &remote) {

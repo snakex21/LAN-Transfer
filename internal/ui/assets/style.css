@@ -9,9 +9,14 @@
 }
 body{font-family:"Segoe UI",system-ui,sans-serif;background:var(--bg-primary);color:var(--text-primary);min-height:100vh;font-size:14px;line-height:1.45;
   background-image:radial-gradient(ellipse at top,#1a1a3e 0%,transparent 50%),radial-gradient(ellipse at bottom right,#0a1628 0%,transparent 50%);background-attachment:fixed}
-button,input{font:inherit}
+button,input,select{font:inherit}
 :focus-visible{outline:3px solid var(--focus);outline-offset:2px}
 .hidden{display:none!important}
+.i18n-pending{visibility:hidden}
+/* paths, addresses, file names: left-to-right even in RTL layouts */
+.ltr-text{direction:ltr;unicode-bidi:isolate;text-align:start}
+[dir=rtl] .ltr-text{text-align:right}
+[dir=rtl] .chevron{display:inline-block;transform:scaleX(-1)}
 .muted{color:var(--text-secondary);font-size:13px}
 .small{font-size:12px}
 
@@ -25,6 +30,8 @@ button,input{font:inherit}
 .receive-main .label{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted)}
 .code{font:700 24px/1.1 Consolas,"Cascadia Mono",monospace;letter-spacing:.12em;color:var(--accent)}
 .receive-actions{display:flex;flex-direction:column;gap:6px}
+.topbar-end{display:flex;align-items:center;gap:10px;min-width:0}
+.settings-btn{font-size:17px;line-height:1}
 
 /* layout */
 .layout{max-width:1200px;margin:0 auto;padding:18px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
@@ -51,7 +58,7 @@ button,input{font:inherit}
 
 /* devices */
 .devices{display:grid;gap:8px}
-.device{width:100%;display:flex;align-items:center;gap:10px;text-align:left;padding:11px 12px;border:1px solid var(--border);border-radius:12px;background:var(--bg-input);color:var(--text-primary);cursor:pointer}
+.device{width:100%;display:flex;align-items:center;gap:10px;text-align:start;padding:11px 12px;border:1px solid var(--border);border-radius:12px;background:var(--bg-input);color:var(--text-primary);cursor:pointer}
 .device:hover{border-color:var(--accent)}
 .device.active{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset,0 0 18px var(--accent-glow)}
 .device.disabled{opacity:.55;cursor:not-allowed}
@@ -110,7 +117,7 @@ input:not([type=radio]){flex:1;min-width:0;padding:9px 11px;border-radius:9px;bo
 .pathbar{display:flex;gap:6px;align-items:center;margin-bottom:8px}
 .remote-path{flex:1;min-width:0;padding:7px 10px;border-radius:9px;background:var(--bg-input);border:1px solid var(--border);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px}
 .folder-list{display:grid;gap:4px;max-height:200px;overflow:auto}
-.folder-entry{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:7px 10px;border:1px solid var(--border);border-radius:9px;background:var(--bg-input);color:var(--text-primary);cursor:pointer}
+.folder-entry{display:flex;align-items:center;gap:8px;width:100%;text-align:start;padding:7px 10px;border:1px solid var(--border);border-radius:9px;background:var(--bg-input);color:var(--text-primary);cursor:pointer}
 .folder-entry:hover{border-color:var(--accent)}
 .folder-entry span:nth-child(2){flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .send-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:16px;padding-top:14px;border-top:1px solid var(--border)}
@@ -159,7 +166,10 @@ dialog p{margin-bottom:14px}
 #pairCode{width:100%;font:700 26px Consolas,monospace;letter-spacing:.3em;text-align:center}
 .form-error{min-height:20px;margin-top:8px;color:var(--error);font-size:13px}
 .dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}
-.toasts{position:fixed;right:18px;bottom:18px;display:grid;gap:8px;z-index:50;max-width:min(420px,90vw)}
+.field{display:block;margin:4px 0 6px;color:var(--text-secondary);font-size:13px}
+select{width:100%;padding:9px 11px;border-radius:9px;border:1px solid var(--border-strong);background:var(--bg-input);color:var(--text-primary)}
+.field-hint{margin:8px 0 4px}
+.toasts{position:fixed;inset-inline-end:18px;bottom:18px;display:grid;gap:8px;z-index:50;max-width:min(420px,90vw)}
 .toast{padding:11px 14px;border-radius:11px;background:var(--bg-tertiary);border:1px solid var(--border-strong);box-shadow:0 10px 25px #0008;font-size:13px;animation:slide .2s ease-out}
 .toast.error{border-color:rgba(255,82,82,.6)}
 .toast.success{border-color:rgba(0,200,83,.6)}

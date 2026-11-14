@@ -16,6 +16,7 @@ import (
 	"lantransfer/internal/app"
 	"lantransfer/internal/config"
 	"lantransfer/internal/discovery"
+	"lantransfer/internal/i18n"
 	"lantransfer/internal/protocol"
 	"lantransfer/internal/security"
 	"lantransfer/internal/service"
@@ -23,15 +24,17 @@ import (
 	"lantransfer/internal/version"
 )
 
-const usage = `użycie:
-  LANTransferCLI.exe version
-  LANTransferCLI.exe serve
-  LANTransferCLI.exe devices
-  LANTransferCLI.exe send <plik|folder>... --to <ip[:port]|nazwa> --code <kod> [--dest <folder>] [--parallel N] [--json]
-  LANTransferCLI.exe send <plik|folder> <ip-lub-nazwa> [folder-docelowy] --code <kod>
+// usage is the help text in the current language (cli.usage in locales/).
+func usage() string { return t("cli.usage") }
 
-Kod parowania wyświetla odbiorca (okno programu albo "serve").
-Zamiast --code można ustawić zmienną LANTRANSFER_CODE.`
+// t renders a message in the current language (LANTRANSFER_LANG, the saved
+// choice or the system language, see app.ResolveLanguage).
+func t(key string, kv ...any) string { return i18n.T(i18n.Current(), key, kv...) }
+
+// usageError is an error followed by the help text.
+func usageError(err error) error {
+	return i18n.Wrap(err, "cli.errorWithUsage", "error", err, "usage", i18n.M("cli.usage"))
+}
 
 // Run executes one CLI command.
 func Run(state *app.State, args []string) error {
@@ -40,14 +43,14 @@ func Run(state *app.State, args []string) error {
 
 func run(state *app.State, args []string, stdout, stderr io.Writer) error {
 	if len(args) == 0 {
-		return errors.New(usage)
+		return errors.New(usage())
 	}
 	switch args[0] {
 	case "serve":
-		fmt.Fprintf(stderr, "LAN Transfer odbiera pliki jako %q na porcie %d\n", state.Name, config.HTTPPort)
-		fmt.Fprintf(stderr, "Folder odbioru: %s\n", state.ReceiveDir)
-		fmt.Fprintf(stderr, "Odcisk certyfikatu: %s\n", security.ShortFingerprint(state.Identity.Fingerprint))
-		fmt.Fprintf(stderr, "Kod parowania: %s\n", state.Pairing.Code())
+		fmt.Fprintln(stderr, t("cli.serving", "name", state.Name, "port", fmt.Sprint(config.HTTPPort)))
+		fmt.Fprintln(stderr, t("cli.receiveDir", "path", state.ReceiveDir))
+		fmt.Fprintln(stderr, t("cli.fingerprint", "fingerprint", security.ShortFingerprint(state.Identity.Fingerprint)))
+		fmt.Fprintln(stderr, t("cli.pairingCode", "code", state.Pairing.Code()))
 		return service.Run(state)
 	case "devices":
 		devices, err := discovery.Discover(1200*time.Millisecond, state.ID)
@@ -60,13 +63,13 @@ func run(state *app.State, args []string, stdout, stderr io.Writer) error {
 	case "send":
 		return send(state, args[1:], stdout, stderr)
 	case "version", "--version", "-v":
-		fmt.Fprintf(stdout, "LAN Transfer %s (protokół %d)\n", version.String(), protocol.Version)
+		fmt.Fprintln(stdout, t("cli.version", "version", version.String(), "protocol", fmt.Sprint(protocol.Version)))
 		return nil
 	case "help", "-h", "--help":
-		fmt.Fprintln(stdout, usage)
+		fmt.Fprintln(stdout, usage())
 		return nil
 	default:
-		return fmt.Errorf("nieznana komenda: %s\n%s", args[0], usage)
+		return usageError(i18n.New("cli.unknownCommand", "command", args[0]))
 	}
 }
 
@@ -93,7 +96,7 @@ func parseSend(args []string) (sendOptions, error) {
 	var positional []string
 	for len(args) > 0 {
 		if err := fs.Parse(args); err != nil {
-			return opts, fmt.Errorf("%v\n%s", err, usage)
+			return opts, usageError(err)
 		}
 		args = fs.Args()
 		if len(args) > 0 {
@@ -104,7 +107,7 @@ func parseSend(args []string) (sendOptions, error) {
 	if opts.target == "" {
 		// Legacy form: send <path> <target> [destination]
 		if len(positional) < 2 || len(positional) > 3 {
-			return opts, errors.New(usage)
+			return opts, errors.New(usage())
 		}
 		opts.paths, opts.target = positional[:1], positional[1]
 		if len(positional) == 3 {
@@ -114,10 +117,10 @@ func parseSend(args []string) (sendOptions, error) {
 		opts.paths = positional
 	}
 	if len(opts.paths) == 0 {
-		return opts, errors.New("nie podano plików do wysłania\n" + usage)
+		return opts, usageError(i18n.New("cli.noFiles"))
 	}
 	if strings.TrimSpace(opts.code) == "" {
-		return opts, errors.New("brak kodu parowania: podaj --code albo ustaw LANTRANSFER_CODE")
+		return opts, i18n.New("cli.noCode")
 	}
 	return opts, nil
 }
@@ -139,7 +142,7 @@ func send(state *app.State, args []string, stdout, stderr io.Writer) error {
 		return err
 	}
 	defer session.Close()
-	fmt.Fprintf(stderr, "Sparowano z %s (%s), certyfikat %s\n", session.PeerName, address, security.ShortFingerprint(session.Fingerprint))
+	fmt.Fprintln(stderr, t("cli.paired", "peer", session.PeerName, "address", address, "fingerprint", security.ShortFingerprint(session.Fingerprint)))
 
 	for _, path := range opts.paths {
 		plan, err := transfer.PlanPath(path, address, opts.dest)
@@ -165,15 +168,15 @@ func send(state *app.State, args []string, stdout, stderr io.Writer) error {
 		if opts.json {
 			_ = json.NewEncoder(stdout).Encode(result)
 		} else if err == nil {
-			fmt.Fprintf(stderr, "\rWysłano %s: %d plików, %s w %.1f s (%.0f MB/s), SHA-256 zgodne\n",
-				plan.Name, plan.TotalFiles, transfer.FormatBytes(plan.TotalBytes), elapsed.Seconds(), result["mb_per_s"])
+			fmt.Fprintln(stderr, "\r"+t("cli.sent", "name", plan.Name, "count", plan.TotalFiles, "size", plan.TotalBytes,
+				"seconds", elapsed.Seconds(), "speed", result["mb_per_s"].(float64)*(1<<20)))
 		}
 		for _, skipped := range plan.Skipped {
-			fmt.Fprintf(stderr, "Pominięto (dowiązanie lub plik specjalny): %s\n", skipped)
+			fmt.Fprintln(stderr, t("cli.skipped", "path", skipped))
 		}
 		if err != nil {
 			if errors.Is(err, context.Canceled) {
-				return errors.New("przerwano – uruchom tę samą komendę ponownie, aby wznowić")
+				return i18n.New("cli.interrupted")
 			}
 			return err
 		}
@@ -195,9 +198,8 @@ func reportProgress(w io.Writer, plan *transfer.Plan, progress *transfer.Progres
 				pct = float64(bytes) * 100 / float64(plan.TotalBytes)
 			}
 			rate := float64(bytes-progress.Resumed.Load()) / time.Since(started).Seconds()
-			fmt.Fprintf(w, "\r%s: %5.1f%%  %s / %s  %.0f MB/s  pliki %d/%d   ", plan.Name, pct,
-				transfer.FormatBytes(bytes), transfer.FormatBytes(plan.TotalBytes), rate/(1<<20),
-				progress.DoneFiles.Load(), plan.TotalFiles)
+			fmt.Fprint(w, "\r"+t("cli.progress", "name", plan.Name, "percent", pct, "done", bytes, "total", plan.TotalBytes,
+				"speed", rate, "doneFiles", fmt.Sprint(progress.DoneFiles.Load()), "totalFiles", fmt.Sprint(plan.TotalFiles))+"   ")
 		}
 	}
 }

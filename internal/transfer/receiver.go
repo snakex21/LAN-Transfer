@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -17,6 +16,7 @@ import (
 	"syscall"
 
 	"lantransfer/internal/fsafe"
+	"lantransfer/internal/i18n"
 	"lantransfer/internal/protocol"
 )
 
@@ -55,16 +55,27 @@ type fileRequest struct {
 	jobFiles int
 }
 
+// httpError is sent to the peer as protocol.ErrorResponse: English text plus
+// the translation key and parameters.
 type httpError struct {
 	status int
 	code   string
-	msg    string
+	msg    i18n.Msg
 }
 
-func (e *httpError) Error() string { return e.msg }
+func (e *httpError) Error() string { return i18n.Render(i18n.Current(), e.msg) }
 
-func badRequest(code, format string, args ...any) *httpError {
-	return &httpError{status: http.StatusBadRequest, code: code, msg: fmt.Sprintf(format, args...)}
+func newHTTPError(status int, code, key string, kv ...any) *httpError {
+	return &httpError{status: status, code: code, msg: i18n.M(key, kv...)}
+}
+
+func badRequest(code, key string, kv ...any) *httpError {
+	return newHTTPError(http.StatusBadRequest, code, key, kv...)
+}
+
+// internalError reports an OS error (its text is not translated).
+func internalError(err error) *httpError {
+	return &httpError{status: http.StatusInternalServerError, msg: i18n.MsgOf(err)}
 }
 
 func (r *Receiver) parseRequest(req *http.Request) (*fileRequest, *httpError) {
@@ -74,21 +85,21 @@ func (r *Receiver) parseRequest(req *http.Request) (*fileRequest, *httpError) {
 	q := req.URL.Query()
 	f := &fileRequest{transfer: q.Get("transfer"), rel: q.Get("path"), isDir: q.Get("dir") == "1", jobName: q.Get("job_name")}
 	if len(f.transfer) < 8 || len(f.transfer) > 64 || strings.Trim(f.transfer, "0123456789abcdef") != "" {
-		return nil, badRequest("", "nieprawidłowy identyfikator transferu")
+		return nil, badRequest("", "err.badTransferID")
 	}
 	osRel, err := fsafe.CleanRelPath(f.rel)
 	if err != nil {
-		return nil, badRequest(protocol.CodeBadName, "%v", err)
+		return nil, &httpError{status: http.StatusBadRequest, code: protocol.CodeBadName, msg: i18n.MsgOf(err)}
 	}
 	f.osRel = osRel
 	if f.size, err = strconv.ParseInt(q.Get("size"), 10, 64); err != nil || f.size < 0 {
 		if !f.isDir {
-			return nil, badRequest("", "nieprawidłowy rozmiar pliku")
+			return nil, badRequest("", "err.badFileSize")
 		}
 	}
 	if v := q.Get("offset"); v != "" {
 		if f.offset, err = strconv.ParseInt(v, 10, 64); err != nil || f.offset < 0 || f.offset > f.size {
-			return nil, badRequest(protocol.CodeOffset, "nieprawidłowe przesunięcie")
+			return nil, badRequest(protocol.CodeOffset, "err.badOffset")
 		}
 	}
 	f.jobSize, _ = strconv.ParseInt(q.Get("job_size"), 10, 64)
@@ -99,13 +110,12 @@ func (r *Receiver) parseRequest(req *http.Request) (*fileRequest, *httpError) {
 		clean := filepath.Clean(dest)
 		info, err := os.Stat(clean)
 		if !filepath.IsAbs(clean) || err != nil || !info.IsDir() {
-			return nil, badRequest("", "nieprawidłowy folder docelowy")
+			return nil, badRequest("", "err.badDestination")
 		}
 		f.destDir = clean
 	}
 	if r.MaxFileSize > 0 && f.size > r.MaxFileSize {
-		return nil, &httpError{status: http.StatusRequestEntityTooLarge, code: protocol.CodeTooLarge,
-			msg: fmt.Sprintf("plik przekracza limit %d bajtów", r.MaxFileSize)}
+		return nil, newHTTPError(http.StatusRequestEntityTooLarge, protocol.CodeTooLarge, "err.fileTooLarge", "max", r.MaxFileSize)
 	}
 	return f, nil
 }
@@ -137,7 +147,7 @@ func (r *Receiver) HandleOffset(w http.ResponseWriter, req *http.Request) {
 // HandleUpload stores one file (or creates one directory).
 func (r *Receiver) HandleUpload(w http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodPost {
-		writeError(w, &httpError{status: http.StatusMethodNotAllowed, msg: "POST only"})
+		writeError(w, &httpError{status: http.StatusMethodNotAllowed, msg: i18n.Text("POST only")})
 		return
 	}
 	f, herr := r.parseRequest(req)
@@ -152,7 +162,7 @@ func (r *Receiver) HandleUpload(w http.ResponseWriter, req *http.Request) {
 			err = os.MkdirAll(final, 0o755)
 		}
 		if err != nil {
-			writeError(w, &httpError{status: http.StatusInternalServerError, msg: err.Error()})
+			writeError(w, internalError(err))
 			return
 		}
 		r.Incoming.dirDone(peer, f)
@@ -161,7 +171,7 @@ func (r *Receiver) HandleUpload(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if !r.acquire(f.key()) {
-		writeError(w, &httpError{status: http.StatusConflict, code: protocol.CodeOffset, msg: "ten plik jest właśnie odbierany"})
+		writeError(w, newHTTPError(http.StatusConflict, protocol.CodeOffset, "err.fileBusy"))
 		return
 	}
 	defer r.release(f.key())
@@ -185,7 +195,7 @@ func (r *Receiver) HandleUpload(w http.ResponseWriter, req *http.Request) {
 func (r *Receiver) receive(req *http.Request, f *fileRequest, peer string) (string, *httpError) {
 	part := f.partPath()
 	if err := os.MkdirAll(filepath.Dir(part), 0o755); err != nil {
-		return "", &httpError{status: http.StatusInternalServerError, msg: err.Error()}
+		return "", internalError(err)
 	}
 	hideFile(filepath.Dir(part))
 
@@ -194,8 +204,7 @@ func (r *Receiver) receive(req *http.Request, f *fileRequest, peer string) (stri
 		current = info.Size()
 	}
 	if f.offset > current {
-		return "", &httpError{status: http.StatusConflict, code: protocol.CodeOffset,
-			msg: fmt.Sprintf("odbiorca ma tylko %d bajtów tego pliku", current)}
+		return "", newHTTPError(http.StatusConflict, protocol.CodeOffset, "err.receiverHasLess", "have", current)
 	}
 	if err := r.ensureSpace(f.destDir, f.size-f.offset); err != nil {
 		return "", err
@@ -203,7 +212,7 @@ func (r *Receiver) receive(req *http.Request, f *fileRequest, peer string) (stri
 
 	file, err := os.OpenFile(part, os.O_RDWR|os.O_CREATE, 0o644)
 	if err != nil {
-		return "", &httpError{status: http.StatusInternalServerError, msg: err.Error()}
+		return "", internalError(err)
 	}
 	closed := false
 	defer func() {
@@ -212,16 +221,16 @@ func (r *Receiver) receive(req *http.Request, f *fileRequest, peer string) (stri
 		}
 	}()
 	if err := file.Truncate(f.offset); err != nil {
-		return "", &httpError{status: http.StatusInternalServerError, msg: err.Error()}
+		return "", internalError(err)
 	}
 	hasher := sha256.New()
 	if f.offset > 0 {
 		if _, err := io.CopyN(hasher, file, f.offset); err != nil {
-			return "", &httpError{status: http.StatusInternalServerError, msg: "nie można odczytać części pliku: " + err.Error()}
+			return "", newHTTPError(http.StatusInternalServerError, "", "err.readPart", "error", err)
 		}
 	}
 	if _, err := file.Seek(f.offset, io.SeekStart); err != nil {
-		return "", &httpError{status: http.StatusInternalServerError, msg: err.Error()}
+		return "", internalError(err)
 	}
 
 	remaining := f.size - f.offset
@@ -236,15 +245,15 @@ func (r *Receiver) receive(req *http.Request, f *fileRequest, peer string) (stri
 	}
 	switch {
 	case copyErr != nil && isNoSpace(copyErr):
-		return "", &httpError{status: http.StatusInsufficientStorage, code: protocol.CodeNoSpace, msg: "zabrakło miejsca na dysku odbiorcy"}
+		return "", newHTTPError(http.StatusInsufficientStorage, protocol.CodeNoSpace, "err.diskFull")
 	case copyErr != nil:
 		// Connection dropped or sender cancelled: keep the part for resuming.
-		return "", &httpError{status: http.StatusBadRequest, msg: "przerwano przesyłanie: " + copyErr.Error()}
+		return "", badRequest("", "err.uploadInterrupted", "error", copyErr)
 	case written > remaining:
 		_ = file.Truncate(f.offset)
-		return "", badRequest("", "nadawca wysłał więcej danych niż zapowiedział")
+		return "", badRequest("", "err.tooMuchData")
 	case written < remaining:
-		return "", badRequest("", "przesyłanie niekompletne (%d z %d bajtów)", f.offset+written, f.size)
+		return "", badRequest("", "err.incomplete", "done", f.offset+written, "total", f.size)
 	}
 
 	expected := strings.ToLower(req.Trailer.Get(protocol.TrailerSHA256))
@@ -253,21 +262,20 @@ func (r *Receiver) receive(req *http.Request, f *fileRequest, peer string) (stri
 		file.Close()
 		closed = true
 		_ = os.Remove(part)
-		return "", &httpError{status: http.StatusUnprocessableEntity, code: protocol.CodeChecksum,
-			msg: "suma kontrolna SHA-256 się nie zgadza, plik odrzucono"}
+		return "", newHTTPError(http.StatusUnprocessableEntity, protocol.CodeChecksum, "err.checksum")
 	}
 	if err := file.Close(); err != nil {
 		closed = true
-		return "", &httpError{status: http.StatusInternalServerError, msg: err.Error()}
+		return "", internalError(err)
 	}
 	closed = true
 
 	final, err := r.finalPath(f)
 	if err != nil {
-		return "", &httpError{status: http.StatusInternalServerError, msg: err.Error()}
+		return "", internalError(err)
 	}
 	if err := os.MkdirAll(filepath.Dir(final), 0o755); err != nil {
-		return "", &httpError{status: http.StatusInternalServerError, msg: err.Error()}
+		return "", internalError(err)
 	}
 	r.mu.Lock()
 	final = fsafe.UniquePath(final)
@@ -277,7 +285,7 @@ func (r *Receiver) receive(req *http.Request, f *fileRequest, peer string) (stri
 	}
 	r.mu.Unlock()
 	if err != nil {
-		return "", &httpError{status: http.StatusInternalServerError, msg: err.Error()}
+		return "", internalError(err)
 	}
 	if r.Incoming.fileDone(peer, f) || r.Incoming == nil {
 		r.removePartialDir(f.destDir, f.key())
@@ -311,7 +319,7 @@ func (r *Receiver) finalPath(f *fileRequest) (string, error) {
 		final = filepath.Join(final, parts[1])
 	}
 	if !fsafe.Within(f.destDir, final) {
-		return "", errors.New("ścieżka poza folderem docelowym")
+		return "", i18n.New("err.outsideDestination")
 	}
 	return final, nil
 }
@@ -326,8 +334,7 @@ func (r *Receiver) ensureSpace(dir string, need int64) *httpError {
 		return nil // unknown: let the write itself fail if needed
 	}
 	if uint64(need)+spaceMargin > free {
-		return &httpError{status: http.StatusInsufficientStorage, code: protocol.CodeNoSpace,
-			msg: fmt.Sprintf("za mało miejsca na dysku odbiorcy (potrzeba %s, wolne %s)", FormatBytes(need), FormatBytes(int64(free)))}
+		return newHTTPError(http.StatusInsufficientStorage, protocol.CodeNoSpace, "err.notEnoughSpace", "need", need, "free", int64(free))
 	}
 	return nil
 }
@@ -423,11 +430,13 @@ func writeJSON(w http.ResponseWriter, status int, value any) {
 }
 
 func writeError(w http.ResponseWriter, err *httpError) {
-	writeJSON(w, err.status, protocol.ErrorResponse{Error: err.msg, Code: err.code})
+	writeJSON(w, err.status, protocol.ErrorResponse{
+		Error: i18n.Render(i18n.Fallback, err.msg), Code: err.code, Key: err.msg.Key, Params: err.msg.Params,
+	})
 }
 
 // WriteError sends a JSON error (used by the service package).
-func WriteError(w http.ResponseWriter, status int, code, msg string) {
+func WriteError(w http.ResponseWriter, status int, code string, msg i18n.Msg) {
 	writeError(w, &httpError{status: status, code: code, msg: msg})
 }
 

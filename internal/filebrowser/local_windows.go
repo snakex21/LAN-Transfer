@@ -3,10 +3,12 @@
 package filebrowser
 
 import (
-	"errors"
 	"path/filepath"
 	"syscall"
+	"unicode/utf16"
 	"unsafe"
+
+	"lantransfer/internal/i18n"
 )
 
 const (
@@ -72,8 +74,10 @@ type browseInfo struct {
 
 func PickFiles() ([]string, error) {
 	buffer := make([]uint16, 65536)
-	title, _ := syscall.UTF16PtrFromString("Wybierz pliki do wysłania")
-	filter := []uint16{'W', 's', 'z', 'y', 's', 't', 'k', 'i', 'e', ' ', 'p', 'l', 'i', 'k', 'i', 0, '*', '.', '*', 0, 0}
+	lang := i18n.Current()
+	title, _ := syscall.UTF16PtrFromString(i18n.T(lang, "dialog.pickFiles"))
+	// Filter: description, NUL, "*.*", NUL, NUL.
+	filter := append(utf16.Encode([]rune(i18n.T(lang, "dialog.allFiles"))), 0, '*', '.', '*', 0, 0)
 
 	dialog := openFileName{
 		StructSize:  uint32(unsafe.Sizeof(openFileName{})),
@@ -111,7 +115,7 @@ func PickFiles() ([]string, error) {
 }
 
 func PickFolder() (string, error) {
-	title, _ := syscall.UTF16PtrFromString("Wybierz folder do wysłania")
+	title, _ := syscall.UTF16PtrFromString(i18n.T(i18n.Current(), "dialog.pickFolder"))
 	displayName := make([]uint16, 260)
 	info := browseInfo{
 		DisplayName: &displayName[0],
@@ -131,7 +135,7 @@ func PickFolder() (string, error) {
 		if callErr != syscall.Errno(0) {
 			return "", callErr
 		}
-		return "", errors.New("nie udało się odczytać wybranego folderu")
+		return "", i18n.New("err.pickedFolderUnreadable")
 	}
 	return syscall.UTF16ToString(pathBuffer), nil
 }

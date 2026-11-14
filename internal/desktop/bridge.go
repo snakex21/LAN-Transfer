@@ -13,16 +13,20 @@ import (
 	"lantransfer/internal/config"
 	"lantransfer/internal/discovery"
 	"lantransfer/internal/filebrowser"
+	"lantransfer/internal/i18n"
 	"lantransfer/internal/model"
 	"lantransfer/internal/networksetup"
 	"lantransfer/internal/preview"
 	"lantransfer/internal/protocol"
 	"lantransfer/internal/security"
 	"lantransfer/internal/transfer"
+	"lantransfer/internal/ui"
 	"lantransfer/internal/version"
 )
 
 // result is the uniform shape every binding returns to JavaScript.
+// A failure carries "error" (text in the current language, for logs) and
+// "error_msg" (translation key + parameters, rendered by the page).
 type result map[string]any
 
 func ok(fields result) result {
@@ -35,7 +39,7 @@ func ok(fields result) result {
 }
 
 func fail(err error) result {
-	r := result{"ok": false, "error": err.Error()}
+	r := result{"ok": false, "error": err.Error(), "error_msg": i18n.MsgOf(err)}
 	if errors.Is(err, transfer.ErrNotPaired) {
 		r["need_pairing"] = true
 	}
@@ -67,6 +71,7 @@ func (b *bridge) bindAll() error {
 		"openFolder":       b.openFolder,
 		"firewallStatus":   b.firewallStatus,
 		"updateFirewall":   b.updateFirewall,
+		"setLanguage":      b.setLanguage,
 	}
 	for name, fn := range bindings {
 		if err := b.window.Bind(name, fn); err != nil {
@@ -83,6 +88,23 @@ func (b *bridge) appInfo() result {
 		"protocol": protocol.Version, "fingerprint": security.ShortFingerprint(s.Identity.Fingerprint),
 		"pairing_code": s.Pairing.Code(), "version": version.String(),
 	})
+}
+
+// setLanguage saves the choice from the settings dialog ("auto" or a code),
+// switches the backend language, retitles the native window and returns the
+// new bootstrap (catalogs) for the page.
+func (b *bridge) setLanguage(choice string) result {
+	info, err := app.ChooseLanguage(choice)
+	if err != nil {
+		return fail(err)
+	}
+	boot, err := ui.NewBootstrap(info.Language, info.Source, info.Detected)
+	if err != nil {
+		return fail(err)
+	}
+	title := WindowTitle(info.Language)
+	b.window.Dispatch(func() { b.window.SetTitle(title) })
+	return ok(result{"i18n": boot, "title": title})
 }
 
 // deviceView adds pairing state to a discovered device.
@@ -113,7 +135,7 @@ func (b *bridge) discoverDevices() result {
 		})
 	}
 	if err != nil && len(views) == 0 {
-		return fail(fmt.Errorf("wykrywanie urządzeń nie działa: %w", err))
+		return fail(i18n.Wrap(err, "err.discovery", "error", err))
 	}
 	return ok(result{"devices": views})
 }
@@ -182,7 +204,7 @@ func (b *bridge) startTransfer(paths []string, address, destination string) resu
 
 func (b *bridge) cancelTransfer(id string) result {
 	if !b.state.Sender.Cancel(id) {
-		return fail(errors.New("tego transferu nie można już anulować"))
+		return fail(i18n.New("err.cannotCancel"))
 	}
 	return ok(nil)
 }
@@ -225,7 +247,7 @@ func (b *bridge) openFolder(path string) result {
 		}
 	}
 	if !allowed {
-		return fail(errors.New("tego folderu nie można otworzyć"))
+		return fail(i18n.New("err.folderNotAllowed"))
 	}
 	if err := exec.Command("explorer.exe", "/select,", path).Start(); err != nil {
 		return fail(err)
@@ -242,7 +264,7 @@ func (b *bridge) firewallStatus() result {
 // Windows shows its own UAC prompt.
 func (b *bridge) updateFirewall() result {
 	if err := networksetup.UpdateLegacyRules(); err != nil {
-		return fail(fmt.Errorf("nie udało się uruchomić aktualizacji reguł zapory: %w", err))
+		return fail(i18n.Wrap(err, "err.firewallUpdate", "error", err))
 	}
 	return ok(nil)
 }

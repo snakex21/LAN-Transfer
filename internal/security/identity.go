@@ -11,11 +11,11 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/hex"
-	"errors"
-	"fmt"
 	"math/big"
 	"strings"
 	"time"
+
+	"lantransfer/internal/i18n"
 )
 
 // Identity is an ephemeral, self-signed TLS certificate generated at start-up.
@@ -77,7 +77,7 @@ func ShortFingerprint(fingerprint string) string {
 // ErrFingerprintMismatch means the peer presented a different certificate than
 // the one recorded when it was paired (possible man-in-the-middle, or the peer
 // simply restarted).
-var ErrFingerprintMismatch = errors.New("certyfikat odbiorcy nie zgadza się z zapamiętanym przy parowaniu")
+var ErrFingerprintMismatch = i18n.New("err.fingerprintMismatch")
 
 // ClientConfig returns a TLS configuration that accepts the self-signed
 // certificate of a peer. When expected is non-empty the peer's certificate
@@ -89,7 +89,7 @@ func ClientConfig(expected string, seen func(string)) *tls.Config {
 		InsecureSkipVerify: true, // self-signed; verified by fingerprint below
 		VerifyConnection: func(state tls.ConnectionState) error {
 			if len(state.PeerCertificates) == 0 {
-				return errors.New("odbiorca nie przedstawił certyfikatu")
+				return i18n.New("err.noCertificate")
 			}
 			sum := sha256.Sum256(state.PeerCertificates[0].Raw)
 			actual := hex.EncodeToString(sum[:])
@@ -97,7 +97,8 @@ func ClientConfig(expected string, seen func(string)) *tls.Config {
 				seen(actual)
 			}
 			if expected != "" && !strings.EqualFold(expected, actual) {
-				return fmt.Errorf("%w (%s ≠ %s)", ErrFingerprintMismatch, ShortFingerprint(actual), ShortFingerprint(expected))
+				return i18n.Wrap(ErrFingerprintMismatch, "err.fingerprintChanged",
+					"actual", ShortFingerprint(actual), "expected", ShortFingerprint(expected))
 			}
 			return nil
 		},

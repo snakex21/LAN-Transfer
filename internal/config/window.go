@@ -40,7 +40,7 @@ func LoadWindowState() (WindowState, bool) {
 
 func SaveWindowState(state WindowState) error {
 	if state.Width < 700 || state.Height < 520 {
-		return errors.New("nieprawidłowy rozmiar okna")
+		return errors.New("invalid window size")
 	}
 
 	dir, err := ApplicationDataDir()

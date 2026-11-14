@@ -6,34 +6,39 @@
 <title>LAN Transfer</title>
 <style>/*__STYLE__*/</style>
 </head>
-<body>
+<!-- Texts come from locales/ui.<code>.json: data-i18n="key" sets the text,
+     data-i18n-title / -placeholder / -aria-label set attributes. -->
+<body class="i18n-pending">
 <header class="topbar">
   <div class="brand">
     <span class="logo" aria-hidden="true">⇄</span>
     <div>
       <h1>LAN Transfer</h1>
-      <div class="subtitle" id="me">Uruchamianie…</div>
+      <div class="subtitle" id="me" data-i18n="app.starting"></div>
     </div>
   </div>
-  <section class="receive-box" aria-labelledby="receiveTitle">
-    <div class="receive-main">
-      <div class="label" id="receiveTitle">Kod parowania tego komputera</div>
-      <div class="code" id="pairingCode" aria-live="polite">––– –––</div>
-      <div class="muted small">Odcisk certyfikatu: <b id="fingerprint">—</b></div>
-    </div>
-    <div class="receive-actions">
-      <button class="btn ghost small" id="newCode" title="Unieważnia stary kod i rozłącza sparowanych nadawców">Nowy kod</button>
-      <button class="btn ghost small" id="openReceive" title="Otwórz folder odbioru">Folder odbioru</button>
-    </div>
-  </section>
+  <div class="topbar-end">
+    <section class="receive-box" aria-labelledby="receiveTitle">
+      <div class="receive-main">
+        <div class="label" id="receiveTitle" data-i18n="receive.title"></div>
+        <div class="code" id="pairingCode" dir="ltr" aria-live="polite">––– –––</div>
+        <div class="muted small"><span data-i18n="receive.fingerprint"></span> <b id="fingerprint" dir="ltr">—</b></div>
+      </div>
+      <div class="receive-actions">
+        <button class="btn ghost small" id="newCode" data-i18n="receive.newCode" data-i18n-title="receive.newCodeHint"></button>
+        <button class="btn ghost small" id="openReceive" data-i18n="receive.openFolder" data-i18n-title="receive.openFolderHint"></button>
+      </div>
+    </section>
+    <button class="icon-btn settings-btn" id="openSettings" data-i18n-title="settings.title" data-i18n-aria-label="settings.title">⚙</button>
+  </div>
 </header>
 
 <div id="firewallBanner" class="banner hidden" role="status">
-  <div><b>Znaleziono reguły zapory z LAN Transfer 1.x.</b>
-    <span class="muted">Otwierają porty także w profilu sieci <b>Publiczna</b>. Wersja 2 tworzy reguły tylko dla profili Prywatna i Domena (tylko lokalna podsieć). Nic nie zostanie zmienione bez Twojej zgody.</span></div>
+  <div><b data-i18n="firewall.title"></b>
+    <span class="muted" data-i18n="firewall.body"></span></div>
   <div class="banner-actions">
-    <button class="btn small" id="firewallUpdate">Zaktualizuj reguły</button>
-    <button class="btn ghost small" id="firewallLater">Nie teraz</button>
+    <button class="btn small" id="firewallUpdate" data-i18n="firewall.update"></button>
+    <button class="btn ghost small" id="firewallLater" data-i18n="firewall.later"></button>
   </div>
 </div>
 
@@ -41,107 +46,119 @@
   <section class="card devices-card" aria-labelledby="devicesTitle">
     <div class="section-head">
       <div>
-        <h2 id="devicesTitle"><span class="step">1</span>Odbiorca</h2>
-        <div class="muted">Komputery z LAN Transfer w tej sieci.</div>
+        <h2 id="devicesTitle"><span class="step">1</span><span data-i18n="devices.title"></span></h2>
+        <div class="muted" data-i18n="devices.subtitle"></div>
       </div>
-      <button class="btn secondary small" id="refresh">Odśwież</button>
+      <button class="btn secondary small" id="refresh" data-i18n="common.refresh"></button>
     </div>
-    <div id="devices" class="devices"><div class="empty">Szukam urządzeń…</div></div>
+    <div id="devices" class="devices"><div class="empty" data-i18n="devices.searching"></div></div>
     <details class="manual">
-      <summary>Połącz ręcznie (adres IP)</summary>
+      <summary data-i18n="devices.manual"></summary>
       <form id="manualForm" class="manual-form">
-        <input id="manualAddress" placeholder="np. 192.168.0.15 lub 192.168.0.15:45455" autocomplete="off" spellcheck="false">
-        <button class="btn secondary small" type="submit">Połącz</button>
+        <input id="manualAddress" dir="auto" data-i18n-placeholder="devices.manualPlaceholder" data-i18n-aria-label="devices.manualLabel" autocomplete="off" spellcheck="false">
+        <button class="btn secondary small" type="submit" id="manualConnect" data-i18n="devices.connect"></button>
       </form>
     </details>
   </section>
 
   <section class="card" aria-labelledby="pickTitle">
-    <h2 id="pickTitle"><span class="step">2</span>Co wysłać</h2>
+    <h2 id="pickTitle"><span class="step">2</span><span data-i18n="pick.title"></span></h2>
     <div class="drop-zone" id="dropZone">
       <div class="drop-icon" aria-hidden="true">⬇</div>
-      <div class="drop-note"><b>Przeciągnij tu pliki lub foldery</b><br><span class="muted">albo</span></div>
+      <div class="drop-note"><b data-i18n="pick.dropHere"></b><br><span class="muted" data-i18n="pick.or"></span></div>
       <div class="picker-actions">
-        <button class="btn" id="pickFiles">Wybierz pliki</button>
-        <button class="btn secondary" id="pickFolder">Wybierz folder</button>
+        <button class="btn" id="pickFiles" data-i18n="pick.files"></button>
+        <button class="btn secondary" id="pickFolder" data-i18n="pick.folder"></button>
       </div>
       <form id="pathForm" class="path-form">
-        <input id="pathInput" placeholder="…lub wklej ścieżkę pliku/folderu" aria-label="Ścieżka do dodania" autocomplete="off" spellcheck="false">
-        <button class="btn ghost small" type="submit">Dodaj</button>
+        <input id="pathInput" dir="auto" data-i18n-placeholder="pick.pathPlaceholder" data-i18n-aria-label="pick.pathLabel" autocomplete="off" spellcheck="false">
+        <button class="btn ghost small" type="submit" id="pathAdd" data-i18n="pick.add"></button>
       </form>
     </div>
     <div class="selection-head hidden" id="selectionHead">
       <span id="selectionCount"></span>
-      <button class="link-btn" id="clearSelection">Wyczyść</button>
+      <button class="link-btn" id="clearSelection" data-i18n="pick.clear"></button>
     </div>
     <div id="selection" class="selection" role="list"></div>
     <div id="previewPanel" class="preview-panel hidden">
       <div class="preview-head">
-        <div class="preview-title-wrap"><b id="previewTitle">Podgląd</b><span id="previewMeta"></span></div>
-        <button class="icon-btn" id="closePreview" title="Zamknij podgląd" aria-label="Zamknij podgląd">×</button>
+        <div class="preview-title-wrap"><b id="previewTitle"></b><span id="previewMeta"></span></div>
+        <button class="icon-btn" id="closePreview" data-i18n-title="preview.close" data-i18n-aria-label="preview.close">×</button>
       </div>
       <div id="previewBody" class="preview-body"></div>
     </div>
   </section>
 
   <section class="card" aria-labelledby="destTitle">
-    <h2 id="destTitle"><span class="step">3</span>Gdzie zapisać</h2>
-    <div id="remoteHint" class="muted">Najpierw wybierz i sparuj odbiorcę.</div>
+    <h2 id="destTitle"><span class="step">3</span><span data-i18n="dest.title"></span></h2>
+    <div id="remoteHint" class="muted" data-i18n="dest.pairFirst"></div>
     <div id="destBox" class="hidden">
-      <label class="radio"><input type="radio" name="destMode" value="default" checked><span>Folder odbioru na komputerze <b id="destPeer"></b></span></label>
-      <label class="radio"><input type="radio" name="destMode" value="custom"><span>Wybrany folder na odbiorcy</span></label>
+      <label class="radio"><input type="radio" name="destMode" value="default" checked><span id="destDefaultLabel"></span></label>
+      <label class="radio"><input type="radio" name="destMode" value="custom"><span data-i18n="dest.custom"></span></label>
       <div id="remoteBrowser" class="remote-browser hidden">
         <div class="pathbar">
-          <button class="icon-btn" id="remoteUp" title="Folder wyżej" aria-label="Folder wyżej">↑</button>
-          <div class="remote-path" id="remotePath">Dyski</div>
-          <button class="icon-btn" id="remoteRefresh" title="Odśwież" aria-label="Odśwież">⟳</button>
+          <button class="icon-btn" id="remoteUp" data-i18n-title="dest.up" data-i18n-aria-label="dest.up">↑</button>
+          <div class="remote-path ltr-text" id="remotePath"></div>
+          <button class="icon-btn" id="remoteRefresh" data-i18n-title="common.refresh" data-i18n-aria-label="common.refresh">⟳</button>
         </div>
         <div id="remoteEntries" class="folder-list"></div>
       </div>
     </div>
     <div class="send-row">
-      <div class="muted" id="summary">Wybierz pliki i odbiorcę.</div>
-      <button id="send" class="btn send-btn" disabled>Wyślij</button>
+      <div class="muted" id="summary"></div>
+      <button id="send" class="btn send-btn" disabled data-i18n="send.button"></button>
     </div>
   </section>
 
   <section class="card wide" aria-labelledby="transfersTitle">
     <div class="section-head">
-      <h2 id="transfersTitle">Transfery</h2>
-      <button class="link-btn hidden" id="clearFinished">Usuń zakończone</button>
+      <h2 id="transfersTitle" data-i18n="transfers.title"></h2>
+      <button class="link-btn hidden" id="clearFinished" data-i18n="transfers.clearFinished"></button>
     </div>
-    <div id="transfers" class="transfers" aria-live="polite"><div class="empty compact">Brak aktywnych transferów.</div></div>
+    <div id="transfers" class="transfers" aria-live="polite"></div>
   </section>
 
   <section class="card wide" aria-labelledby="historyTitle">
     <div class="section-head">
-      <h2 id="historyTitle">Historia</h2>
-      <button class="link-btn" id="clearHistory">Wyczyść historię</button>
+      <h2 id="historyTitle" data-i18n="history.title"></h2>
+      <button class="link-btn" id="clearHistory" data-i18n="history.clear"></button>
     </div>
-    <div id="history" class="history"><div class="empty compact">Historia jest pusta.</div></div>
+    <div id="history" class="history"></div>
   </section>
 </main>
 
 <dialog id="pairDialog" aria-labelledby="pairTitle">
   <form method="dialog" id="pairForm">
-    <h2 id="pairTitle">Sparuj z <span id="pairPeer"></span></h2>
-    <p class="muted">Wpisz 6-cyfrowy kod widoczny w oknie LAN Transfer na komputerze odbiorcy.
-      Sprawdź też, czy odcisk certyfikatu jest taki sam jak tam: <b id="pairFinger">—</b></p>
-    <input id="pairCode" inputmode="numeric" autocomplete="one-time-code" maxlength="7" placeholder="000000" aria-label="Kod parowania">
+    <h2 id="pairTitle"></h2>
+    <p class="muted" id="pairIntro"></p>
+    <input id="pairCode" dir="ltr" inputmode="numeric" autocomplete="one-time-code" maxlength="7" placeholder="000000" data-i18n-aria-label="pair.codeLabel">
     <div class="form-error" id="pairError" role="alert"></div>
     <div class="dialog-actions">
-      <button class="btn ghost" value="cancel" type="button" id="pairCancel">Anuluj</button>
-      <button class="btn" id="pairSubmit" type="submit">Sparuj</button>
+      <button class="btn ghost" value="cancel" type="button" id="pairCancel" data-i18n="common.cancel"></button>
+      <button class="btn" id="pairSubmit" type="submit" data-i18n="pair.submit"></button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="settingsDialog" aria-labelledby="settingsTitle">
+  <form method="dialog" id="settingsForm">
+    <h2 id="settingsTitle" data-i18n="settings.title"></h2>
+    <label class="field" for="languageSelect" data-i18n="settings.language"></label>
+    <select id="languageSelect"></select>
+    <p class="muted small field-hint" id="languageHint"></p>
+    <div class="dialog-actions">
+      <button class="btn" type="submit" id="settingsClose" data-i18n="common.close"></button>
     </div>
   </form>
 </dialog>
 
 <footer class="footer">
-  <span>LAN Transfer <b id="appVersion">—</b> · protokół <span id="appProtocol">—</span></span>
-  <span class="muted">MIT · <span id="repoLink">github.com/snakex21/LAN-Transfer</span></span>
+  <span>LAN Transfer <b id="appVersion" dir="ltr">—</b> · <span id="appProtocol"></span></span>
+  <span class="muted">MIT · <span id="repoLink" dir="ltr">github.com/snakex21/LAN-Transfer</span></span>
 </footer>
 
 <div id="toasts" class="toasts" aria-live="assertive"></div>
+<script>//__I18N__</script>
 <script>//__SCRIPT__</script>
 </body>
 </html>

@@ -1,9 +1,12 @@
 package cli
 
 import (
+	"errors"
 	"reflect"
 	"strings"
 	"testing"
+
+	"lantransfer/internal/i18n"
 )
 
 func TestParseSendForms(t *testing.T) {
@@ -16,7 +19,8 @@ func TestParseSendForms(t *testing.T) {
 	if err != nil || opts.target != "LAPTOP" || opts.dest != `D:\Odbior` || len(opts.paths) != 1 {
 		t.Fatalf("legacy form: %+v %v", opts, err)
 	}
-	if _, err := parseSend([]string{"a", "b"}); err == nil || !strings.Contains(err.Error(), "kodu") {
+	var e *i18n.Error
+	if _, err := parseSend([]string{"a", "b"}); !errors.As(err, &e) || e.Key != "cli.noCode" {
 		t.Fatalf("missing code not reported: %v", err)
 	}
 	t.Setenv("LANTRANSFER_CODE", "999999")
@@ -29,11 +33,31 @@ func TestParseSendForms(t *testing.T) {
 }
 
 func TestVersionCommand(t *testing.T) {
-	var out strings.Builder
-	if err := run(nil, []string{"version"}, &out, &out); err != nil {
-		t.Fatal(err)
+	defer i18n.SetCurrent(i18n.Fallback)
+	for lang, want := range map[string]string{"en": "(protocol 2)", "pl": "(protokół 2)", "de": "(Protokoll 2)"} {
+		i18n.SetCurrent(lang)
+		var out strings.Builder
+		if err := run(nil, []string{"version"}, &out, &out); err != nil {
+			t.Fatal(err)
+		}
+		if !strings.HasPrefix(out.String(), "LAN Transfer ") || !strings.Contains(out.String(), want) {
+			t.Errorf("%s: unexpected version output: %q", lang, out.String())
+		}
 	}
-	if !strings.HasPrefix(out.String(), "LAN Transfer ") || !strings.Contains(out.String(), "protokół 2") {
-		t.Fatalf("unexpected version output: %q", out.String())
+}
+
+func TestHelpIsTranslatedButKeepsCommands(t *testing.T) {
+	defer i18n.SetCurrent(i18n.Fallback)
+	for _, lang := range i18n.Languages {
+		i18n.SetCurrent(lang.Code)
+		var out strings.Builder
+		if err := run(nil, []string{"help"}, &out, &out); err != nil {
+			t.Fatal(err)
+		}
+		for _, literal := range []string{"LANTransferCLI.exe send", "--to", "--code", "--dest", "--parallel", "--json", "LANTRANSFER_CODE", "LANTRANSFER_LANG"} {
+			if !strings.Contains(out.String(), literal) {
+				t.Errorf("%s: help lacks %q", lang.Code, literal)
+			}
+		}
 	}
 }

@@ -2,11 +2,12 @@ package transfer
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 	"path/filepath"
 	"sync"
 	"time"
+
+	"lantransfer/internal/i18n"
 )
 
 // Job and history statuses.
@@ -30,7 +31,8 @@ type HistoryEntry struct {
 	Bytes     int64     `json:"bytes"`
 	Files     int       `json:"files"`
 	Status    string    `json:"status"`
-	Error     string    `json:"error,omitempty"`
+	Error     string    `json:"error,omitempty"`     // text in the language at the time
+	ErrorMsg  *i18n.Msg `json:"error_msg,omitempty"` // key + params (2.1+), rendered by the UI
 	Started   time.Time `json:"started"`
 	Finished  time.Time `json:"finished"`
 	Location  string    `json:"location,omitempty"`
@@ -111,16 +113,5 @@ func (h *History) save(entries []HistoryEntry) {
 	}
 }
 
-// FormatBytes renders a size the way the UI does ("1.5 GB").
-func FormatBytes(n int64) string {
-	const unit = 1024
-	if n < unit {
-		return fmt.Sprintf("%d B", n)
-	}
-	value, exp := float64(n), 0
-	for value >= unit && exp < 4 {
-		value /= unit
-		exp++
-	}
-	return fmt.Sprintf("%.1f %s", value, []string{"B", "KB", "MB", "GB", "TB"}[exp])
-}
+// FormatBytes renders a size in the current language, like the UI ("1.5 GB").
+func FormatBytes(n int64) string { return i18n.FormatSize(i18n.Current(), n) }

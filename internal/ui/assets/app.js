@@ -4,14 +4,21 @@
 const state = {
   info: null,
   devices: [],
+  discovered: false,     // first discovery finished
+  discoveryError: null,  // message of the last failed discovery
   target: null,          // selected device view (address, name, paired…)
   selected: [],          // local paths
   previewed: '',
+  previewInfo: null,     // last loaded preview (re-rendered on language change)
+  previewError: null,
   remotePath: '',
   remoteParent: '',
+  remoteListing: null,   // last folder listing on the receiver
+  remoteError: null,
   destination: '',       // '' = receiver's default folder
   destMode: 'default',
   refreshing: false,
+  history: [],
 };
 
 const $ = id => document.getElementById(id);
@@ -24,36 +31,12 @@ function el(tag, className, text) {
   return node;
 }
 
-function formatBytes(bytes) {
-  if (!Number.isFinite(bytes) || bytes <= 0) return '0 B';
-  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
-  let value = bytes, unit = 0;
-  while (value >= 1024 && unit < units.length - 1) { value /= 1024; unit++; }
-  return `${value.toFixed(value >= 10 || unit === 0 ? 0 : 1)} ${units[unit]}`;
-}
-
-function formatSpeed(bps) {
-  return bps > 0 ? `${formatBytes(bps)}/s` : '—';
-}
-
-function formatDuration(seconds) {
-  if (!Number.isFinite(seconds) || seconds <= 0) return '—';
-  if (seconds < 60) return `${Math.ceil(seconds)} s`;
-  const m = Math.floor(seconds / 60), s = Math.round(seconds % 60);
-  if (m < 60) return `${m} min ${s} s`;
-  return `${Math.floor(m / 60)} h ${m % 60} min`;
-}
-
-function formatTime(iso) {
-  const d = new Date(iso);
-  if (isNaN(d)) return '';
-  return d.toLocaleString('pl-PL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-}
-
-function plural(n, one, few, many) {
-  if (n === 1) return one;
-  const d = n % 10, t = n % 100;
-  return d >= 2 && d <= 4 && (t < 12 || t > 14) ? few : many;
+// ltr shows a path, address or file name: always left-to-right, isolated
+// from the surrounding (possibly right-to-left) text.
+function ltr(tag, className, text) {
+  const node = el(tag, className ? `${className} ltr-text` : 'ltr-text', text);
+  node.dir = 'ltr';
+  return node;
 }
 
 function baseName(path) {
@@ -62,27 +45,59 @@ function baseName(path) {
 }
 
 function toast(message, kind = '') {
-  const node = el('div', `toast ${kind}`, message);
+  const node = el('div', `toast ${kind}`);
+  if (message instanceof Node) node.append(message); else node.textContent = message;
   $('toasts').appendChild(node);
   setTimeout(() => node.remove(), kind === 'error' ? 9000 : 4500);
 }
 
-const STATUS_LABEL = {
-  queued: 'w kolejce', running: 'trwa', done: 'zakończono', failed: 'błąd',
-  cancelled: 'anulowano', interrupted: 'przerwano',
-};
+// A failed binding call: keeps the backend message (key + params) so that it
+// is shown in the UI language.
+class BackendError extends Error {
+  constructor(result) {
+    super(result.error || '');
+    this.msg = result.error_msg || null;
+    this.needPairing = !!result.need_pairing;
+  }
+}
+
+function describe(error) {
+  if (error && error.msg) return tm(error.msg);
+  return (error && error.message) || String(error);
+}
+
+function resultError(result) {
+  return result.error_msg ? tm(result.error_msg) : result.error;
+}
+
+function statusLabel(status) {
+  switch (status) {
+    case 'queued': return t('status.queued');
+    case 'running': return t('status.running');
+    case 'done': return t('status.done');
+    case 'failed': return t('status.failed');
+    case 'cancelled': return t('status.cancelled');
+    case 'interrupted': return t('status.interrupted');
+  }
+  return status;
+}
 
 // ---- receiver info -----------------------------------------------------------
 async function loadInfo() {
-  const info = await appInfo();
-  state.info = info;
-  $('me').textContent = `${info.name} · odbiór na porcie ${info.port}`;
-  $('me').title = `Folder odbioru: ${info.receive_dir}`;
+  state.info = await appInfo();
+  renderInfo();
+  showCode(state.info.pairing_code);
+}
+
+function renderInfo() {
+  const info = state.info;
+  document.title = t('app.windowTitle', { version: info ? info.version : '' }).replace(/[⁨⁩]/g, '');
+  if (!info) return;
+  $('me').textContent = t('app.subtitle', { name: info.name, port: String(info.port) });
+  $('me').title = t('app.receiveDir', { path: info.receive_dir });
   $('fingerprint').textContent = info.fingerprint;
   $('appVersion').textContent = info.version;
-  $('appProtocol').textContent = info.protocol;
-  document.title = `LAN Transfer ${info.version}`;
-  showCode(info.pairing_code);
+  $('appProtocol').textContent = t('footer.protocol', { protocol: String(info.protocol) });
 }
 
 function showCode(code) {
@@ -96,20 +111,20 @@ async function refreshDevices() {
   $('refresh').disabled = true;
   try {
     const result = await discoverDevices();
-    if (!result.ok) throw new Error(result.error);
+    if (!result.ok) throw new BackendError(result);
     state.devices = result.devices || [];
+    state.discoveryError = null;
     if (state.target) {
       const fresh = state.devices.find(d => d.address === state.target.address);
       if (fresh) state.target = fresh;
     }
-    renderDevices();
   } catch (error) {
-    if (!state.devices.length) {
-      $('devices').replaceChildren(el('div', 'empty', `Błąd wykrywania: ${error.message || error}`));
-    }
+    state.discoveryError = error;
   } finally {
     state.refreshing = false;
+    state.discovered = true;
     $('refresh').disabled = false;
+    renderDevices();
   }
 }
 
@@ -117,8 +132,14 @@ function renderDevices() {
   const box = $('devices');
   const list = [...state.devices];
   if (state.target && !list.some(d => d.address === state.target.address)) list.push(state.target);
+  if (!list.length && !state.discovered) {
+    box.replaceChildren(el('div', 'empty', t('devices.searching')));
+    return;
+  }
   if (!list.length) {
-    box.replaceChildren(el('div', 'empty', 'Nie znaleziono innych komputerów. Uruchom LAN Transfer na drugim komputerze w tej samej sieci albo połącz się ręcznie.'));
+    box.replaceChildren(el('div', 'empty', state.discoveryError
+      ? t('devices.discoveryError', { error: describe(state.discoveryError) })
+      : t('devices.none')));
     return;
   }
   box.replaceChildren(...list.map(device => {
@@ -128,15 +149,17 @@ function renderDevices() {
     const compatible = device.compatible !== false;
     if (!compatible) button.classList.add('disabled');
     const main = el('div', 'device-main');
-    main.append(el('b', '', device.name), el('span', '', `${device.address}${device.short_fingerprint ? ' · ' + device.short_fingerprint : ''}`));
+    const name = el('b', '', device.name);
+    name.dir = 'auto';
+    main.append(name, ltr('span', '', `${device.address}${device.short_fingerprint ? ' · ' + device.short_fingerprint : ''}`));
     let badge;
-    if (!compatible) badge = el('span', 'badge warn', 'starsza wersja');
-    else if (device.paired) badge = el('span', 'badge ok', '✓ sparowano');
-    else badge = el('span', 'badge', 'wymaga kodu');
+    if (!compatible) badge = el('span', 'badge warn', t('devices.badgeOld'));
+    else if (device.paired) badge = el('span', 'badge ok', t('devices.badgePaired'));
+    else badge = el('span', 'badge', t('devices.badgeNeedsCode'));
     button.append(el('span', 'device-icon', '🖥'), main, badge);
     button.addEventListener('click', () => {
       if (!compatible) {
-        toast(`${device.name} używa starszej wersji LAN Transfer bez szyfrowania. Zaktualizuj program na tym komputerze.`, 'error');
+        toast(t('devices.oldVersion', { name: device.name }), 'error');
         return;
       }
       selectDevice(device);
@@ -162,25 +185,45 @@ function onTargetChanged() {
   renderDevices();
   $('remoteHint').classList.toggle('hidden', !!state.target);
   $('destBox').classList.toggle('hidden', !state.target);
-  $('destPeer').textContent = state.target ? state.target.name : '';
+  renderDestinationLabel();
   state.remotePath = '';
   state.destination = '';
   if (state.destMode === 'custom') loadRemote('');
   updateSummary();
 }
 
+function renderDestinationLabel() {
+  const name = el('b', '', state.target ? state.target.name : '');
+  name.dir = 'auto';
+  $('destDefaultLabel').replaceChildren(tn('dest.default', { name }));
+}
+
 // ---- pairing dialog ----------------------------------------------------------
+let pairingDevice = null;
+
+function renderPairingTexts() {
+  const device = pairingDevice;
+  if (!device) return;
+  const peer = el('span', '', device.name);
+  peer.dir = 'auto';
+  $('pairTitle').replaceChildren(tn('pair.title', { name: peer }));
+  const finger = el('b', '', device.short_fingerprint || t('pair.unknownFingerprint'));
+  if (device.short_fingerprint) finger.dir = 'ltr';
+  $('pairIntro').replaceChildren(t('pair.intro'), ' ', tn('pair.checkFingerprint', { fingerprint: finger }));
+}
+
 function askForPairing(device) {
   return new Promise(resolve => {
     const dialog = $('pairDialog');
-    $('pairPeer').textContent = device.name;
-    $('pairFinger').textContent = device.short_fingerprint || 'nieznany (połączenie ręczne)';
+    pairingDevice = device;
+    renderPairingTexts();
     $('pairCode').value = '';
     $('pairError').textContent = '';
     let done = false;
     const finish = value => {
       if (done) return;
       done = true;
+      pairingDevice = null;
       $('pairForm').onsubmit = null;
       $('pairCancel').onclick = null;
       dialog.onclose = null;
@@ -193,22 +236,22 @@ function askForPairing(device) {
       event.preventDefault();
       const code = $('pairCode').value.replace(/\D/g, '');
       if (code.length !== 6) {
-        $('pairError').textContent = 'Kod ma 6 cyfr.';
+        $('pairError').textContent = t('pair.codeDigits');
         return;
       }
       $('pairSubmit').disabled = true;
       $('pairError').textContent = '';
       try {
         const result = await pairDevice(device.address, code);
-        if (!result.ok) throw new Error(result.error);
+        if (!result.ok) throw new BackendError(result);
         if (device.short_fingerprint && result.fingerprint !== device.short_fingerprint) {
-          toast(`Uwaga: odcisk certyfikatu (${result.fingerprint}) różni się od ogłaszanego (${device.short_fingerprint}).`, 'error');
+          toast(t('pair.fingerprintMismatch', { actual: result.fingerprint, announced: device.short_fingerprint }), 'error');
         } else {
-          toast(`Sparowano z ${result.peer} (certyfikat ${result.fingerprint}).`, 'success');
+          toast(t('pair.success', { peer: result.peer, fingerprint: result.fingerprint }), 'success');
         }
         finish(true);
       } catch (error) {
-        $('pairError').textContent = error.message || String(error);
+        $('pairError').textContent = describe(error);
       } finally {
         $('pairSubmit').disabled = false;
       }
@@ -229,13 +272,13 @@ function connectManually(event) {
 // ---- local selection -----------------------------------------------------------
 async function chooseFiles() {
   const result = await pickLocalFiles();
-  if (!result.ok) return toast(`Nie można otworzyć okna wyboru: ${result.error}`, 'error');
+  if (!result.ok) return toast(t('pick.dialogFailed', { error: resultError(result) }), 'error');
   addPaths(result.paths || []);
 }
 
 async function chooseFolder() {
   const result = await pickLocalFolder();
-  if (!result.ok) return toast(`Nie można otworzyć okna wyboru: ${result.error}`, 'error');
+  if (!result.ok) return toast(t('pick.dialogFailed', { error: resultError(result) }), 'error');
   if (result.path) addPaths([result.path]);
 }
 
@@ -253,7 +296,7 @@ async function addTypedPath(event) {
   if (!path) return;
   const result = await previewLocalPath(path);
   if (!result.ok) {
-    toast(`Nie można dodać: ${result.error}`, 'error');
+    toast(t('pick.addFailed', { error: resultError(result) }), 'error');
     return;
   }
   $('pathInput').value = '';
@@ -263,22 +306,24 @@ async function addTypedPath(event) {
 window.__addDroppedPaths = function (paths) {
   if (!Array.isArray(paths) || !paths.length) return;
   addPaths(paths);
-  toast(paths.length === 1 ? 'Dodano przeciągnięty element.' : `Dodano ${paths.length} ${plural(paths.length, 'element', 'elementy', 'elementów')}.`);
+  toast(t('pick.dropped', { count: paths.length }));
 };
 
 function renderSelection() {
   const box = $('selection');
   $('selectionHead').classList.toggle('hidden', !state.selected.length);
-  $('selectionCount').textContent = `Wybrano ${state.selected.length} ${plural(state.selected.length, 'element', 'elementy', 'elementów')}`;
+  $('selectionCount').textContent = t('pick.selectedCount', { count: state.selected.length });
   box.replaceChildren(...state.selected.map((path, index) => {
     const row = el('div', 'selected-item');
     row.setAttribute('role', 'listitem');
     if (path === state.previewed) row.classList.add('preview-active');
     const text = el('div', 'selected-text');
-    text.append(el('b', '', baseName(path)), el('span', '', path));
+    const name = el('b', '', baseName(path));
+    name.dir = 'auto';
+    text.append(name, ltr('span', '', path));
     const remove = el('button', 'remove-btn', '×');
-    remove.title = 'Usuń z listy';
-    remove.setAttribute('aria-label', `Usuń ${baseName(path)}`);
+    remove.title = t('pick.removeHint');
+    remove.setAttribute('aria-label', t('pick.removeItem', { name: baseName(path) }));
     remove.addEventListener('click', event => {
       event.stopPropagation();
       state.selected.splice(index, 1);
@@ -295,63 +340,85 @@ function renderSelection() {
 // ---- preview -------------------------------------------------------------
 async function loadPreview(path) {
   state.previewed = path;
+  state.previewInfo = null;
+  state.previewError = null;
   renderSelection();
   $('previewPanel').classList.remove('hidden');
   $('previewTitle').textContent = baseName(path);
   $('previewMeta').textContent = path;
-  const body = $('previewBody');
-  body.replaceChildren(el('div', 'preview-message', 'Wczytywanie podglądu…'));
+  $('previewBody').replaceChildren(el('div', 'preview-message', t('preview.loading')));
   try {
     const result = await previewLocalPath(path);
-    if (!result.ok) throw new Error(result.error);
-    if (state.previewed === path) renderPreview(result.preview);
+    if (!result.ok) throw new BackendError(result);
+    if (state.previewed === path) {
+      state.previewInfo = result.preview;
+      renderPreview();
+    }
   } catch (error) {
-    if (state.previewed === path) body.replaceChildren(el('div', 'preview-message', `Brak podglądu: ${error.message || error}`));
+    if (state.previewed === path) {
+      state.previewError = error;
+      renderPreview();
+    }
   }
 }
 
-function renderPreview(info) {
+function renderPreview() {
   const body = $('previewBody');
+  if (state.previewError) {
+    body.replaceChildren(el('div', 'preview-message', t('preview.failed', { error: describe(state.previewError) })));
+    return;
+  }
+  const info = state.previewInfo;
+  if (!info) return;
   $('previewTitle').textContent = info.name || baseName(info.path || '');
-  const meta = [info.kind === 'folder' ? `${info.entry_count || 0} elementów` : formatBytes(info.size || 0)];
+  const meta = [info.kind === 'folder' ? t('preview.folderItems', { count: info.entry_count || 0 }) : I18N.formatBytes(info.size || 0)];
   if (info.mime && !['application/octet-stream', 'inode/directory'].includes(info.mime)) meta.push(info.mime);
-  if (info.modified) meta.push(`zmieniono ${info.modified}`);
+  if (info.modified) meta.push(t('preview.modified', { time: I18N.formatDateTime(info.modified, { dateStyle: 'medium', timeStyle: 'short' }) }));
   $('previewMeta').textContent = meta.join(' · ');
 
   if ((info.kind === 'image' || info.kind === 'pdf') && info.data_url) {
     const node = el(info.kind === 'image' ? 'img' : 'iframe', info.kind === 'image' ? 'preview-image' : 'preview-pdf');
     node.src = info.data_url;
-    if (info.kind === 'image') node.alt = info.name || 'Podgląd obrazu'; else node.title = info.name || 'PDF';
+    if (info.kind === 'image') node.alt = info.name || t('preview.imageAlt'); else node.title = info.name || 'PDF';
     body.replaceChildren(node);
     return;
   }
   if (info.kind === 'text') {
-    const nodes = [el('pre', 'preview-text', info.text || '')];
-    if (info.truncated) nodes.push(el('div', 'preview-message', 'Pokazano początek pliku.'));
+    const text = el('pre', 'preview-text', info.text || '');
+    text.dir = 'auto';
+    const nodes = [text];
+    if (info.truncated) nodes.push(el('div', 'preview-message', t('preview.textTruncated')));
     body.replaceChildren(...nodes);
     return;
   }
   if (info.kind === 'folder') {
     const list = el('div', 'preview-folder-list');
     const entries = info.entries || [];
-    if (!entries.length) list.append(el('div', 'preview-message', 'Folder jest pusty.'));
-    entries.forEach(name => list.append(el('div', 'preview-folder-item', name)));
-    if (info.truncated) list.append(el('div', 'preview-message', `Pokazano ${entries.length} z ${info.entry_count} elementów.`));
+    if (!entries.length) list.append(el('div', 'preview-message', t('preview.folderEmpty')));
+    entries.forEach(name => list.append(ltr('div', 'preview-folder-item', name)));
+    if (info.truncated) list.append(el('div', 'preview-message', t('preview.folderTruncated', { shown: entries.length, count: info.entry_count })));
     body.replaceChildren(list);
     return;
   }
   const grid = el('div', 'preview-file-info');
-  [['Nazwa', info.name], ['Typ', info.mime || 'nieznany'], ['Rozmiar', formatBytes(info.size || 0)], ['Ścieżka', info.path]].forEach(([k, v]) => {
+  [
+    [t('preview.name'), info.name, false],
+    [t('preview.type'), info.mime || t('preview.unknownType'), false],
+    [t('preview.size'), I18N.formatBytes(info.size || 0), false],
+    [t('preview.path'), info.path, true],
+  ].forEach(([k, v, isPath]) => {
     const row = el('div', 'preview-info-row');
-    row.append(el('span', '', k), el('span', '', v || ''));
+    row.append(el('span', '', k), isPath ? ltr('span', '', v || '') : el('span', '', v || ''));
     grid.append(row);
   });
-  if (info.message) grid.append(el('div', 'preview-message', info.message));
+  if (info.message) grid.append(el('div', 'preview-message', tm(info.message)));
   body.replaceChildren(grid);
 }
 
 function closePreview() {
   state.previewed = '';
+  state.previewInfo = null;
+  state.previewError = null;
   $('previewPanel').classList.add('hidden');
   $('previewBody').replaceChildren();
   renderSelection();
@@ -360,8 +427,7 @@ function closePreview() {
 // ---- remote destination --------------------------------------------------------
 async function loadRemote(path) {
   if (!state.target) return;
-  const entries = $('remoteEntries');
-  entries.replaceChildren(el('div', 'muted', 'Wczytywanie folderów…'));
+  $('remoteEntries').replaceChildren(el('div', 'muted', t('dest.loading')));
   try {
     const result = await browseRemote(state.target.address, path);
     if (!result.ok) {
@@ -369,30 +435,45 @@ async function loadRemote(path) {
         state.target.paired = false;
         renderDevices();
       }
-      throw new Error(result.error);
+      throw new BackendError(result);
     }
     const listing = result.listing;
+    state.remoteListing = listing;
+    state.remoteError = null;
     state.remotePath = listing.path || '';
     state.remoteParent = listing.parent || '';
     state.destination = state.remotePath;
-    $('remotePath').textContent = state.remotePath || 'Dyski – wybierz dysk';
-    $('remoteUp').disabled = !state.remotePath;
-    const items = listing.entries || [];
-    if (!items.length) {
-      entries.replaceChildren(el('div', 'empty compact', 'Brak podfolderów – pliki trafią tutaj.'));
-    } else {
-      entries.replaceChildren(...items.map(entry => {
-        const row = el('button', 'folder-entry');
-        row.type = 'button';
-        row.append(el('span', 'file-icon', '📁'), el('span', '', entry.name), el('span', 'muted', '›'));
-        row.addEventListener('click', () => loadRemote(entry.path));
-        return row;
-      }));
-    }
   } catch (error) {
-    entries.replaceChildren(el('div', 'job-error', `Nie można odczytać folderów: ${error.message || error}`));
+    state.remoteListing = null;
+    state.remoteError = error;
   }
+  renderRemote();
   updateSummary();
+}
+
+function renderRemote() {
+  const entries = $('remoteEntries');
+  if (state.remoteError) {
+    entries.replaceChildren(el('div', 'job-error', t('dest.readFailed', { error: describe(state.remoteError) })));
+    return;
+  }
+  const listing = state.remoteListing;
+  if (!listing) return;
+  $('remotePath').textContent = state.remotePath || t('dest.drives');
+  $('remotePath').dir = state.remotePath ? 'ltr' : 'auto';
+  $('remoteUp').disabled = !state.remotePath;
+  const items = listing.entries || [];
+  if (!items.length) {
+    entries.replaceChildren(el('div', 'empty compact', t('dest.noSubfolders')));
+    return;
+  }
+  entries.replaceChildren(...items.map(entry => {
+    const row = el('button', 'folder-entry');
+    row.type = 'button';
+    row.append(el('span', 'file-icon', '📁'), ltr('span', '', entry.name), el('span', 'muted chevron', '›'));
+    row.addEventListener('click', () => loadRemote(entry.path));
+    return row;
+  }));
 }
 
 function onDestModeChanged(event) {
@@ -408,13 +489,13 @@ function updateSummary() {
   const summary = $('summary');
   const customMissing = state.destMode === 'custom' && !state.destination;
   $('send').disabled = !(state.selected.length && state.target && state.target.paired && !customMissing);
-  if (!state.selected.length) summary.textContent = 'Wybierz pliki lub foldery do wysłania.';
-  else if (!state.target) summary.textContent = 'Wybierz komputer docelowy.';
-  else if (!state.target.paired) summary.textContent = `Sparuj z ${state.target.name}.`;
-  else if (customMissing) summary.textContent = 'Wskaż folder na odbiorcy.';
+  if (!state.selected.length) summary.textContent = t('summary.pickFiles');
+  else if (!state.target) summary.textContent = t('summary.pickTarget');
+  else if (!state.target.paired) summary.textContent = t('summary.pairWith', { name: state.target.name });
+  else if (customMissing) summary.textContent = t('summary.pickFolder');
   else {
-    const where = state.destination || 'folder odbioru';
-    summary.textContent = `${state.selected.length} ${plural(state.selected.length, 'element', 'elementy', 'elementów')} → ${state.target.name} → ${where}`;
+    const where = state.destination || t('summary.defaultFolder');
+    summary.textContent = t('summary.ready', { count: state.selected.length, peer: state.target.name, where });
   }
 }
 
@@ -429,15 +510,15 @@ async function sendSelected() {
         state.target.paired = false;
         renderDevices();
       }
-      throw new Error(result.error);
+      throw new BackendError(result);
     }
-    toast(`Dodano do kolejki: ${result.ids.length} ${plural(result.ids.length, 'transfer', 'transfery', 'transferów')}.`);
+    toast(t('send.queued', { count: result.ids.length }));
     state.selected = [];
     closePreview();
     renderSelection();
     pollTransfers();
   } catch (error) {
-    toast(`Nie udało się rozpocząć wysyłania: ${error.message || error}`, 'error');
+    toast(t('send.failed', { error: describe(error) }), 'error');
   } finally {
     updateSummary();
   }
@@ -450,25 +531,27 @@ function jobCard({ id, direction, name, peer, status, error, totalBytes, totalFi
   const card = el('div', `job ${status}`);
   const head = el('div', 'job-head');
   const title = el('div', 'job-title');
-  const arrow = direction === 'out' ? `→ ${peer}` : `← od ${peer}`;
-  title.append(el('b', '', name), el('span', '', `${arrow} · ${STATUS_LABEL[status] || status}`));
+  const where = direction === 'out' ? t('job.to', { peer }) : t('job.from', { peer });
+  const jobName = el('b', '', name);
+  jobName.dir = 'auto';
+  title.append(jobName, el('span', '', `${where} · ${statusLabel(status)}`));
   head.append(el('span', `job-dir ${direction}`, direction === 'out' ? '⬆' : '⬇'), title);
   if (direction === 'out') {
     const actions = el('div', 'job-actions');
     if (status === 'running' || status === 'queued') {
-      const cancel = el('button', 'btn danger small', 'Anuluj');
+      const cancel = el('button', 'btn danger small', t('common.cancel'));
       cancel.addEventListener('click', async () => {
         const r = await cancelTransfer(id);
-        if (!r.ok) toast(r.error, 'error');
+        if (!r.ok) toast(resultError(r), 'error');
       });
       actions.append(cancel);
     }
     if (status === 'failed' || status === 'cancelled') {
-      const retry = el('button', 'btn secondary small', 'Wznów');
-      retry.title = 'Wyśle tylko brakującą część';
+      const retry = el('button', 'btn secondary small', t('job.resume'));
+      retry.title = t('job.resumeHint');
       retry.addEventListener('click', async () => {
         const r = await retryTransfer(id);
-        if (!r.ok) toast(r.error, 'error');
+        if (!r.ok) toast(resultError(r), 'error');
         pollTransfers();
       });
       actions.append(retry);
@@ -491,17 +574,17 @@ function jobCard({ id, direction, name, peer, status, error, totalBytes, totalFi
   if (!compact) card.append(bar);
 
   const stats = el('div', 'job-stats');
-  stats.append(el('span', '', compact ? formatBytes(totalBytes) : `${pct.toFixed(pct < 10 ? 1 : 0)}% · ${formatBytes(doneBytes)} z ${formatBytes(totalBytes)}`));
-  if (totalFiles > 1 || doneFiles > 1) stats.append(el('span', '', `pliki ${doneFiles}/${totalFiles}`));
+  stats.append(el('span', '', compact ? I18N.formatBytes(totalBytes) : t('job.progress', { percent: pct, done: doneBytes, total: totalBytes })));
+  if (totalFiles > 1 || doneFiles > 1) stats.append(el('span', '', t('job.files', { done: doneFiles, count: totalFiles })));
   if (status === 'running') {
-    stats.append(el('span', '', `prędkość ${formatSpeed(speed)}`));
-    stats.append(el('span', '', `pozostało ${formatDuration(eta)}`));
+    stats.append(el('span', '', t('job.speed', { speed })));
+    stats.append(el('span', '', t('job.remaining', { eta })));
   } else if (status === 'done' && elapsed > 0) {
-    stats.append(el('span', '', totalBytes >= 1 << 20 ? `w ${formatDuration(elapsed)} · śr. ${formatSpeed(speed)}` : `w ${formatDuration(elapsed)}`));
+    stats.append(el('span', '', totalBytes >= 1 << 20 ? t('job.tookAverage', { elapsed, speed }) : t('job.took', { elapsed })));
   }
-  if (current) stats.append(el('span', '', `teraz: ${current}`));
-  if (resumed > 0) stats.append(el('span', '', `wznowiono od ${formatBytes(resumed)}`));
-  if (status === 'done' && direction === 'out') stats.append(el('span', 'status done', '✓ SHA-256 zgodne'));
+  if (current) stats.append(el('span', '', t('job.current', { name: current })));
+  if (resumed > 0) stats.append(el('span', '', t('job.resumedFrom', { bytes: resumed })));
+  if (status === 'done' && direction === 'out') stats.append(el('span', 'status done', t('job.verified')));
   card.append(stats);
   if (error) card.append(el('div', 'job-error', error));
 
@@ -513,7 +596,7 @@ function jobCard({ id, direction, name, peer, status, error, totalBytes, totalFi
       const mfill = el('div');
       mfill.style.width = `${file.size > 0 ? (file.done / file.size) * 100 : 100}%`;
       mini.append(mfill);
-      row.append(el('span', '', file.rel), mini, el('span', '', formatBytes(file.size)));
+      row.append(ltr('span', '', file.rel), mini, el('span', '', I18N.formatBytes(file.size)));
       files.append(row);
     });
     card.append(files);
@@ -521,48 +604,56 @@ function jobCard({ id, direction, name, peer, status, error, totalBytes, totalFi
   return card;
 }
 
+// errorText prefers the translatable message over the stored text.
+function errorText(item) {
+  return item.error_msg ? tm(item.error_msg) : (item.error || '');
+}
+
 function renderTransfers(outgoing, incoming) {
   const cards = [];
   incoming.forEach(job => cards.push(jobCard({
-    id: job.id, direction: 'in', name: job.name, peer: job.peer || 'nieznany', status: job.error ? 'failed' : 'running',
-    error: job.error, totalBytes: job.total_bytes, totalFiles: job.total_files, doneBytes: job.done_bytes,
+    id: job.id, direction: 'in', name: job.name, peer: job.peer || t('job.unknownPeer'), status: job.error ? 'failed' : 'running',
+    error: errorText(job), totalBytes: job.total_bytes, totalFiles: job.total_files, doneBytes: job.done_bytes,
     doneFiles: job.done_files, speed: job.speed, eta: job.speed > 0 ? (job.total_bytes - job.done_bytes) / job.speed : 0,
     active: [], resumed: 0, current: job.current,
   })));
   outgoing.forEach(job => cards.push(jobCard({
-    id: job.id, direction: 'out', name: job.name, peer: job.peer, status: job.status, error: job.error,
+    id: job.id, direction: 'out', name: job.name, peer: job.peer, status: job.status, error: errorText(job),
     totalBytes: job.total_bytes, totalFiles: job.total_files, doneBytes: job.done_bytes, doneFiles: job.done_files,
     speed: job.speed, eta: job.eta, elapsed: job.elapsed, active: job.active, resumed: job.resumed_bytes,
   })));
-  $('transfers').replaceChildren(...(cards.length ? cards : [el('div', 'empty compact', 'Brak aktywnych transferów.')]));
+  $('transfers').replaceChildren(...(cards.length ? cards : [el('div', 'empty compact', t('transfers.empty'))]));
   $('clearFinished').classList.toggle('hidden', !outgoing.some(j => !['running', 'queued'].includes(j.status)));
 
   outgoing.forEach(job => {
     const key = `${job.id}:${job.status}`;
     if (notified.has(key)) return;
-    if (job.status === 'done') toast(`Wysłano „${job.name}” do ${job.peer}.`, 'success');
-    if (job.status === 'failed') toast(`Błąd wysyłania „${job.name}”: ${job.error}`, 'error');
+    if (job.status === 'done') toast(t('toast.sent', { name: job.name, peer: job.peer }), 'success');
+    if (job.status === 'failed') toast(t('toast.sendFailed', { name: job.name, error: errorText(job) }), 'error');
     if (['done', 'failed'].includes(job.status)) notified.add(key);
   });
 }
 
-function renderHistory(history) {
+function renderHistory() {
+  const history = state.history;
   if (!history.length) {
-    $('history').replaceChildren(el('div', 'empty compact', 'Historia jest pusta.'));
+    $('history').replaceChildren(el('div', 'empty compact', t('history.empty')));
     return;
   }
   $('history').replaceChildren(...history.slice(0, 50).map(entry => {
     const row = el('div', 'history-row');
     const sent = entry.direction === 'sent';
+    const name = el('span', '', entry.name);
+    name.dir = 'auto';
     row.append(
       el('span', `job-dir ${sent ? 'out' : 'in'}`, sent ? '⬆' : '⬇'),
-      el('span', '', entry.name),
-      el('span', 'h-peer muted', `${sent ? 'do' : 'od'} ${entry.peer || '—'}`),
-      el('span', 'h-size muted', formatBytes(entry.bytes)),
-      el('span', `status ${entry.status}`, STATUS_LABEL[entry.status] || entry.status),
-      el('span', 'h-time muted', formatTime(entry.finished)),
+      name,
+      el('span', 'h-peer muted', sent ? t('history.to', { peer: entry.peer || '—' }) : t('history.from', { peer: entry.peer || '—' })),
+      el('span', 'h-size muted', I18N.formatBytes(entry.bytes)),
+      el('span', `status ${entry.status}`, statusLabel(entry.status)),
+      el('span', 'h-time muted', I18N.formatDateTime(entry.finished)),
     );
-    row.title = [entry.location, entry.error].filter(Boolean).join('\n');
+    row.title = [entry.location, errorText(entry)].filter(Boolean).join('\n');
     if (entry.location && !sent) {
       row.style.cursor = 'pointer';
       row.addEventListener('click', () => openFolder(entry.location));
@@ -584,12 +675,64 @@ async function pollTransfers() {
     const key = history.length + ':' + (history[0] ? history[0].finished : '');
     if (key !== lastHistoryKey) {
       lastHistoryKey = key;
-      renderHistory(history);
+      state.history = history;
+      renderHistory();
     }
     showCode(result.pairing_code);
   } finally {
     polling = false;
   }
+}
+
+// ---- settings: language ---------------------------------------------------------
+function renderLanguagePicker() {
+  const select = $('languageSelect');
+  const detected = I18N.info(I18N.detected);
+  const auto = el('option', '', t('settings.auto', { language: detected.name }));
+  auto.value = 'auto';
+  const options = [auto, ...I18N.languages.map(l => {
+    const option = el('option', '', l.name);
+    option.value = l.code;
+    option.lang = l.code;
+    option.dir = l.rtl ? 'rtl' : 'ltr';
+    return option;
+  })];
+  select.replaceChildren(...options);
+  select.value = I18N.source === 'manual' ? I18N.language : 'auto';
+  $('languageHint').textContent = I18N.source === 'env'
+    ? t('settings.envHint', { variable: 'LANTRANSFER_LANG' })
+    : t('settings.languageHint');
+}
+
+async function changeLanguage() {
+  const select = $('languageSelect');
+  select.disabled = true;
+  try {
+    const result = await setLanguage(select.value);
+    if (!result.ok) throw new BackendError(result);
+    I18N.update(result.i18n);
+    renderAll();
+  } catch (error) {
+    toast(t('settings.saveFailed', { error: describe(error) }), 'error');
+  } finally {
+    select.disabled = false;
+  }
+}
+
+// renderAll redraws every text after a language change.
+function renderAll() {
+  I18N.apply();
+  renderInfo();
+  renderDevices();
+  renderSelection();
+  if (state.previewed) renderPreview();
+  if (state.target) renderDestinationLabel();
+  if (state.destMode === 'custom') renderRemote();
+  renderPairingTexts();
+  renderLanguagePicker();
+  updateSummary();
+  renderHistory();
+  pollTransfers();
 }
 
 // ---- wiring ----------------------------------------------------------------
@@ -613,15 +756,21 @@ $('clearFinished').addEventListener('click', async () => { await clearFinished()
 $('clearHistory').addEventListener('click', async () => { await clearHistory(); lastHistoryKey = ''; pollTransfers(); });
 $('openReceive').addEventListener('click', async () => {
   const r = await openFolder(state.info ? state.info.receive_dir : '');
-  if (!r.ok) toast(r.error, 'error');
+  if (!r.ok) toast(resultError(r), 'error');
 });
 $('newCode').addEventListener('click', async () => {
   const r = await newPairingCode();
   if (r.ok) {
     showCode(r.pairing_code);
-    toast('Wygenerowano nowy kod. Dotychczas sparowani nadawcy muszą sparować się ponownie.');
+    toast(t('receive.newCodeDone'));
   }
 });
+$('openSettings').addEventListener('click', () => {
+  renderLanguagePicker();
+  $('settingsDialog').showModal();
+  $('languageSelect').focus();
+});
+$('languageSelect').addEventListener('change', changeLanguage);
 
 const dropZone = $('dropZone');
 window.addEventListener('dragover', event => { event.preventDefault(); dropZone.classList.add('drag-active'); });
@@ -643,11 +792,17 @@ async function checkFirewall() {
 $('firewallLater').addEventListener('click', () => $('firewallBanner').classList.add('hidden'));
 $('firewallUpdate').addEventListener('click', async () => {
   const r = await updateFirewall();
-  if (!r.ok) return toast(r.error, 'error');
-  toast('Potwierdź zmianę w oknie Windows (UAC). Reguły zapory zostaną zaktualizowane.');
+  if (!r.ok) return toast(resultError(r), 'error');
+  toast(t('firewall.confirmUac'));
   setTimeout(checkFirewall, 8000);
 });
 
+I18N.apply();
+renderInfo();
+renderDevices();
+renderHistory();
+renderTransfers([], []);
+document.body.classList.remove('i18n-pending');
 loadInfo();
 checkFirewall();
 refreshDevices();
