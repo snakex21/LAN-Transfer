@@ -1,27 +1,25 @@
 package discovery
 
 import (
-	"encoding/json"
 	"log"
 	"net"
 	"time"
 
 	"lantransfer/internal/config"
 	"lantransfer/internal/model"
+	"lantransfer/internal/protocol"
 )
 
-func bindIP() string {
-	if host := config.BindHost(); host != "" {
-		return host
-	}
-	return "0.0.0.0"
-}
+// announceInterval is how often an instance announces itself unprompted, so a
+// single lost broadcast does not make a computer disappear from the list.
+const announceInterval = 2 * time.Second
 
+// Responder answers discovery probes and periodically announces this instance.
 type Responder struct {
-	ID   string
-	Name string
+	Info protocol.Info
 }
 
+// Run blocks forever (until the UDP socket fails to open).
 func (r Responder) Run() {
 	conn, err := net.ListenUDP("udp4", &net.UDPAddr{IP: net.ParseIP(bindIP()), Port: config.UDPPort})
 	if err != nil {
@@ -30,14 +28,15 @@ func (r Responder) Run() {
 	}
 	defer conn.Close()
 
-	payload, err := json.Marshal(model.Device{ID: r.ID, Name: r.Name, Port: config.HTTPPort})
+	payload, err := devicePayload(model.Device{
+		ID: r.Info.ID, Name: r.Info.Name, Port: r.Info.Port,
+		Protocol: r.Info.Protocol, Fingerprint: r.Info.Fingerprint,
+	})
 	if err != nil {
 		log.Println("discovery payload:", err)
 		return
 	}
 
-	// Poza odpowiedzią na zapytania urządzenie samo ogłasza swoją obecność.
-	// Dzięki temu pojedynczy zgubiony broadcast nie powoduje znikania komputera.
 	go func() {
 		announce := func() {
 			for _, addr := range probeTargets() {
@@ -45,7 +44,7 @@ func (r Responder) Run() {
 			}
 		}
 		announce()
-		ticker := time.NewTicker(2 * time.Second)
+		ticker := time.NewTicker(announceInterval)
 		defer ticker.Stop()
 		for range ticker.C {
 			announce()
@@ -58,21 +57,12 @@ func (r Responder) Run() {
 		if err != nil {
 			continue
 		}
-
-		message := buf[:n]
-		if string(message) == discoverMessage {
+		if string(buf[:n]) == discoverMessage {
 			_, _ = conn.WriteToUDP(payload, remote)
 			continue
 		}
-
-		var device model.Device
-		if err := json.Unmarshal(message, &device); err != nil || device.Name == "" {
-			continue
+		if device, ok := parseAnnouncement(buf[:n], remote.IP, r.Info.ID); ok {
+			rememberDevice(device)
 		}
-		if device.ID == r.ID || isOwnAddress(remote.IP) {
-			continue
-		}
-		device.IP = remote.IP.String()
-		rememberDevice(device)
 	}
 }

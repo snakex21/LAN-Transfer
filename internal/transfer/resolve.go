@@ -4,17 +4,17 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"strconv"
 	"strings"
 	"time"
 
 	"lantransfer/internal/config"
-
 	"lantransfer/internal/discovery"
 	"lantransfer/internal/netutil"
 )
 
-func resolveTarget(target, selfID string) (string, error) {
+// ResolveTarget turns an IP, "IP:port" or a discovered device name into a
+// "host:port" address.
+func ResolveTarget(target, selfID string) (string, error) {
 	host := target
 	if h, _, err := net.SplitHostPort(target); err == nil {
 		host = h
@@ -23,7 +23,7 @@ func resolveTarget(target, selfID string) (string, error) {
 		if !config.Loopback && netutil.IsLocalIPv4(ip) {
 			return "", errors.New("nie można wysyłać plików do tego samego komputera")
 		}
-		return target, nil
+		return config.TargetAddress(target), nil
 	}
 
 	devices, err := discovery.Discover(1200*time.Millisecond, selfID)
@@ -32,10 +32,7 @@ func resolveTarget(target, selfID string) (string, error) {
 	}
 	for _, device := range devices {
 		if strings.EqualFold(device.Name, target) {
-			if device.Port == 0 {
-				return device.IP, nil
-			}
-			return net.JoinHostPort(device.IP, strconv.Itoa(device.Port)), nil
+			return device.Address(), nil
 		}
 	}
 	return "", fmt.Errorf("nie znaleziono urządzenia %q", target)

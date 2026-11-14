@@ -1,79 +1,139 @@
+// Package service runs the HTTPS endpoint that receives files and the UDP
+// discovery responder.
 package service
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"errors"
-	"fmt"
+	"io"
 	"net"
 	"net/http"
+	"strconv"
+	"strings"
+	"time"
 
 	"lantransfer/internal/app"
 	"lantransfer/internal/config"
 	"lantransfer/internal/discovery"
 	"lantransfer/internal/filebrowser"
+	"lantransfer/internal/protocol"
+	"lantransfer/internal/security"
 	"lantransfer/internal/transfer"
 )
 
+// Start listens on the configured address and serves in the background.
 func Start(state *app.State) (*http.Server, error) {
-	listener, err := net.Listen("tcp4", address())
+	listener, err := Listen()
 	if err != nil {
 		return nil, err
 	}
-	server := newHTTPServer(state)
-	go discovery.Responder{ID: state.ID, Name: state.Name}.Run()
+	server := NewServer(state)
+	go discovery.Responder{Info: state.Info()}.Run()
 	go func() {
-		if err := server.Serve(listener); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		if err := server.ServeTLS(listener, "", ""); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			_ = listener.Close()
 		}
 	}()
 	return server, nil
 }
 
+// Run serves in the foreground (CLI `serve`).
 func Run(state *app.State) error {
-	listener, err := net.Listen("tcp4", address())
+	listener, err := Listen()
 	if err != nil {
 		return err
 	}
-	go discovery.Responder{ID: state.ID, Name: state.Name}.Run()
-	return newHTTPServer(state).Serve(listener)
+	go discovery.Responder{Info: state.Info()}.Run()
+	return NewServer(state).ServeTLS(listener, "", "")
 }
 
-func newHTTPServer(state *app.State) *http.Server {
+// Listen opens the TCP listener on the configured interface and port.
+func Listen() (net.Listener, error) {
+	return net.Listen("tcp4", net.JoinHostPort(config.BindHost(), strconv.Itoa(config.HTTPPort)))
+}
+
+// NewServer builds the HTTPS server. Only /api/info and /api/pair are public;
+// browsing folders and uploading require a token obtained with the pairing code.
+func NewServer(state *app.State) *http.Server {
+	receiver := &transfer.Receiver{Directory: state.ReceiveDir, Incoming: state.Incoming}
+	return NewServerWith(state, receiver)
+}
+
+// NewServerWith is NewServer with a custom receiver (tests).
+func NewServerWith(state *app.State, receiver *transfer.Receiver) *http.Server {
 	mux := http.NewServeMux()
-	receiver := transfer.Receiver{Directory: state.ReceiveDir}
-	mux.HandleFunc("/api/info", func(w http.ResponseWriter, req *http.Request) {
-		if req.Method != http.MethodGet {
-			http.Error(w, "GET only", http.StatusMethodNotAllowed)
+	mux.HandleFunc("GET "+protocol.PathInfo, func(w http.ResponseWriter, _ *http.Request) {
+		transfer.WriteJSON(w, state.Info())
+	})
+	mux.HandleFunc("POST "+protocol.PathPair, pairHandler(state))
+	auth := requirePairing(state.Pairing)
+	mux.Handle("GET "+protocol.PathBrowse, auth(http.HandlerFunc(browseHandler)))
+	mux.Handle("GET "+protocol.PathOffset, auth(http.HandlerFunc(receiver.HandleOffset)))
+	mux.Handle("POST "+protocol.PathUpload, auth(http.HandlerFunc(receiver.HandleUpload)))
+
+	tlsConfig := state.Identity.ServerConfig()
+	return &http.Server{
+		Handler:           mux,
+		TLSConfig:         tlsConfig,
+		ReadHeaderTimeout: 10 * time.Second,
+		IdleTimeout:       2 * time.Minute,
+		MaxHeaderBytes:    64 << 10,
+		// HTTP/1.1 only: one TCP stream per upload gives the best throughput.
+		TLSNextProto: map[string]func(*http.Server, *tls.Conn, http.Handler){},
+	}
+}
+
+func pairHandler(state *app.State) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+		var request protocol.PairRequest
+		if err := json.NewDecoder(io.LimitReader(req.Body, 4096)).Decode(&request); err != nil {
+			transfer.WriteError(w, http.StatusBadRequest, "", "nieprawidłowe żądanie parowania")
 			return
 		}
-		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(map[string]any{
-			"id":   state.ID,
-			"name": state.Name,
-			"port": config.HTTPPort,
+		host, _, _ := net.SplitHostPort(req.RemoteAddr)
+		token, err := state.Pairing.Pair(host, request.Code, security.Peer{DeviceID: request.DeviceID, Name: limit(request.Name, 64)})
+		switch {
+		case errors.Is(err, security.ErrLocked):
+			transfer.WriteError(w, http.StatusTooManyRequests, "locked", err.Error())
+		case err != nil:
+			transfer.WriteError(w, http.StatusForbidden, "wrong_code", err.Error())
+		default:
+			transfer.WriteJSON(w, protocol.PairResponse{Token: token, Name: state.Name})
+		}
+	}
+}
+
+func requirePairing(pairing *security.Pairing) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			token, ok := strings.CutPrefix(req.Header.Get("Authorization"), "Bearer ")
+			peer, authorized := pairing.Authorize(token)
+			if !ok || !authorized {
+				transfer.WriteError(w, http.StatusUnauthorized, protocol.CodeUnauthorized, "wymagane parowanie kodem")
+				return
+			}
+			name := peer.Name
+			if name == "" {
+				name = peer.Address
+			}
+			next.ServeHTTP(w, req.WithContext(transfer.WithPeer(req.Context(), name)))
 		})
-	})
-	mux.HandleFunc("/api/receive", receiver.HandleHTTP)
-	mux.HandleFunc("/api/browse", func(w http.ResponseWriter, req *http.Request) {
-		if req.Method != http.MethodGet {
-			http.Error(w, "GET only", http.StatusMethodNotAllowed)
-			return
-		}
-		listing, err := filebrowser.Browse(req.URL.Query().Get("path"))
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(listing)
-	})
-	return &http.Server{Handler: mux}
+	}
 }
 
-func address() string {
-	return net.JoinHostPort(config.BindHost(), stringPort(config.HTTPPort))
+func browseHandler(w http.ResponseWriter, req *http.Request) {
+	listing, err := filebrowser.Browse(req.URL.Query().Get("path"))
+	if err != nil {
+		transfer.WriteError(w, http.StatusBadRequest, "", err.Error())
+		return
+	}
+	transfer.WriteJSON(w, listing)
 }
 
-func stringPort(port int) string {
-	return fmt.Sprintf("%d", port)
+func limit(s string, n int) string {
+	if len(s) <= n {
+		return s
+	}
+	return s[:n]
 }
