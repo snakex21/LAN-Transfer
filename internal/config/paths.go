@@ -6,6 +6,9 @@ import (
 )
 
 func ApplicationDataDir() (string, error) {
+	if dir := os.Getenv("LANTRANSFER_DATA_DIR"); dir != "" {
+		return dir, nil
+	}
 	executable, err := os.Executable()
 	if err != nil {
 		return "", err
@@ -14,11 +17,14 @@ func ApplicationDataDir() (string, error) {
 }
 
 func EnsureReceiveDir() (string, error) {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return "", err
+	dir := os.Getenv("LANTRANSFER_RECEIVE_DIR")
+	if dir == "" {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return "", err
+		}
+		dir = filepath.Join(home, "Downloads", "LAN Transfer")
 	}
-	dir := filepath.Join(home, "Downloads", "LAN Transfer")
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return "", err
 	}

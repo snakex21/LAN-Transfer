@@ -8,8 +8,14 @@ import (
 
 	"lantransfer/internal/config"
 	"lantransfer/internal/model"
-	"lantransfer/internal/netutil"
 )
+
+func bindIP() string {
+	if host := config.BindHost(); host != "" {
+		return host
+	}
+	return "0.0.0.0"
+}
 
 type Responder struct {
 	ID   string
@@ -17,7 +23,7 @@ type Responder struct {
 }
 
 func (r Responder) Run() {
-	conn, err := net.ListenUDP("udp4", &net.UDPAddr{IP: net.IPv4zero, Port: config.UDPPort})
+	conn, err := net.ListenUDP("udp4", &net.UDPAddr{IP: net.ParseIP(bindIP()), Port: config.UDPPort})
 	if err != nil {
 		log.Println("discovery:", err)
 		return
@@ -34,8 +40,8 @@ func (r Responder) Run() {
 	// Dzięki temu pojedynczy zgubiony broadcast nie powoduje znikania komputera.
 	go func() {
 		announce := func() {
-			for _, ip := range broadcastAddresses() {
-				_, _ = conn.WriteToUDP(payload, &net.UDPAddr{IP: ip, Port: config.UDPPort})
+			for _, addr := range probeTargets() {
+				_, _ = conn.WriteToUDP(payload, addr)
 			}
 		}
 		announce()
@@ -63,7 +69,7 @@ func (r Responder) Run() {
 		if err := json.Unmarshal(message, &device); err != nil || device.Name == "" {
 			continue
 		}
-		if device.ID == r.ID || netutil.IsLocalIPv4(remote.IP) {
+		if device.ID == r.ID || isOwnAddress(remote.IP) {
 			continue
 		}
 		device.IP = remote.IP.String()

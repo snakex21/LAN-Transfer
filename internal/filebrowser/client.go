@@ -11,7 +11,7 @@ import (
 )
 
 func BrowseRemote(target, path string) (Listing, error) {
-	endpoint := fmt.Sprintf("http://%s:%d/api/browse?path=%s", target, config.HTTPPort, url.QueryEscape(path))
+	endpoint := fmt.Sprintf("http://%s/api/browse?path=%s", config.TargetAddress(target), url.QueryEscape(path))
 	client := &http.Client{Timeout: 5 * time.Second}
 	response, err := client.Get(endpoint)
 	if err != nil {

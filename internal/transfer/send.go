@@ -79,7 +79,7 @@ func SendPathTo(path, target, selfID, destination string) error {
 		_, writeErr = io.CopyBuffer(part, file, make([]byte, 1024*1024))
 	}()
 
-	url := fmt.Sprintf("http://%s:%d/api/receive", ip, config.HTTPPort)
+	url := fmt.Sprintf("http://%s/api/receive", config.TargetAddress(ip))
 	request, err := http.NewRequest(http.MethodPost, url, reader)
 	if err != nil {
 		return err

@@ -71,7 +71,7 @@ func newHTTPServer(state *app.State) *http.Server {
 }
 
 func address() string {
-	return net.JoinHostPort("", stringPort(config.HTTPPort))
+	return net.JoinHostPort(config.BindHost(), stringPort(config.HTTPPort))
 }
 
 func stringPort(port int) string {

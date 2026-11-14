@@ -35,6 +35,9 @@ func HandleSpecialMode(args []string) (bool, error) {
 // Network Discovery switch. We only open the two ports LAN Transfer actually
 // needs. If the rules are missing, a one-time elevated helper is started.
 func EnsureConfigured() {
+	if config.SkipFirewall {
+		return
+	}
 	if firewallConfigured() {
 		return
 	}

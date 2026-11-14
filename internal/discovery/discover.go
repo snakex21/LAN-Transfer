@@ -36,14 +36,14 @@ func Discover(wait time.Duration, selfID string) ([]model.Device, error) {
 		return cachedDevices(), err
 	}
 
-	for _, addr := range broadcastAddresses() {
-		_, _ = conn.WriteToUDP([]byte(discoverMessage), &net.UDPAddr{IP: addr, Port: config.UDPPort})
+	for _, addr := range probeTargets() {
+		_, _ = conn.WriteToUDP([]byte(discoverMessage), addr)
 	}
 	// A second probe helps with packet loss and adapters waking up slowly.
 	if wait >= 300*time.Millisecond {
 		time.Sleep(80 * time.Millisecond)
-		for _, addr := range broadcastAddresses() {
-			_, _ = conn.WriteToUDP([]byte(discoverMessage), &net.UDPAddr{IP: addr, Port: config.UDPPort})
+		for _, addr := range probeTargets() {
+			_, _ = conn.WriteToUDP([]byte(discoverMessage), addr)
 		}
 	}
 
@@ -61,7 +61,7 @@ func Discover(wait time.Duration, selfID string) ([]model.Device, error) {
 		if err := json.Unmarshal(buf[:n], &device); err != nil || device.Name == "" {
 			continue
 		}
-		if (selfID != "" && device.ID == selfID) || netutil.IsLocalIPv4(addr.IP) {
+		if (selfID != "" && device.ID == selfID) || isOwnAddress(addr.IP) {
 			continue
 		}
 		device.IP = addr.IP.String()
@@ -69,7 +69,7 @@ func Discover(wait time.Duration, selfID string) ([]model.Device, error) {
 	}
 
 	devices := cachedDevices()
-	if len(devices) == 0 {
+	if len(devices) == 0 && !config.Loopback {
 		scanLocalSubnets(selfID)
 		devices = cachedDevices()
 	}
@@ -198,6 +198,30 @@ func localPrivatePrefixes() [][3]byte {
 		}
 	}
 	return result
+}
+
+// probeTargets returns where discovery datagrams are sent. In loopback mode
+// only explicitly configured local instances are contacted.
+func probeTargets() []*net.UDPAddr {
+	targets := make([]*net.UDPAddr, 0, 4)
+	if config.Loopback {
+		for _, port := range config.LoopbackPeerUDPPorts {
+			if port != config.UDPPort {
+				targets = append(targets, &net.UDPAddr{IP: net.IPv4(127, 0, 0, 1), Port: port})
+			}
+		}
+		return targets
+	}
+	for _, ip := range broadcastAddresses() {
+		targets = append(targets, &net.UDPAddr{IP: ip, Port: config.UDPPort})
+	}
+	return targets
+}
+
+// isOwnAddress filters this computer's own datagrams on a real LAN. In
+// loopback mode every peer lives on 127.0.0.1 and is told apart by its ID.
+func isOwnAddress(ip net.IP) bool {
+	return !config.Loopback && netutil.IsLocalIPv4(ip)
 }
 
 func broadcastAddresses() []net.IP {
