@@ -306,13 +306,13 @@ func (s *Session) sendFile(ctx context.Context, base url.Values, e Entry, progre
 
 	body := &countingReader{src: file, hash: hasher, onRead: func(n int64) { progress.add(fp, n) }}
 	_, err = s.upload(ctx, q, body, func() string { return hex.EncodeToString(hasher.Sum(nil)) })
-	if err != nil {
+	if err != nil && ctx.Err() == nil {
 		// Roll back this attempt's bytes; a retry asks the receiver again.
+		// After a cancellation the counters stay: the receiver keeps the part.
 		progress.DoneBytes.Add(-(body.n + offset))
 		progress.Resumed.Add(-offset)
-		return err
 	}
-	return nil
+	return err
 }
 
 // countingReader feeds the hash and the progress counter.

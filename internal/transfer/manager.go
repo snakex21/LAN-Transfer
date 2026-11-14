@@ -229,7 +229,7 @@ func (m *Manager) Snapshot() []JobView {
 		}
 		if job.Status == StatusRunning {
 			v.Speed = job.meter.sample(now, v.DoneBytes-v.Resumed)
-			if v.Speed > 0 {
+			if v.Speed > 0 && v.Elapsed > 2 {
 				v.ETA = float64(v.TotalBytes-v.DoneBytes) / v.Speed
 			}
 		} else if v.Elapsed > 0 {

@@ -7,71 +7,127 @@
 <style>/*__STYLE__*/</style>
 </head>
 <body>
-<div class="wrap">
-  <div class="top">
-    <div class="brand">
+<header class="topbar">
+  <div class="brand">
+    <span class="logo" aria-hidden="true">⇄</span>
+    <div>
       <h1>LAN Transfer</h1>
-      <p>Wybierz co wysłać, komputer docelowy i folder po drugiej stronie.</p>
+      <div class="subtitle" id="me">Uruchamianie…</div>
     </div>
-    <div class="pill" id="me">Uruchamianie…</div>
   </div>
+  <section class="receive-box" aria-labelledby="receiveTitle">
+    <div class="receive-main">
+      <div class="label" id="receiveTitle">Kod parowania tego komputera</div>
+      <div class="code" id="pairingCode" aria-live="polite">––– –––</div>
+      <div class="muted small">Odcisk certyfikatu: <b id="fingerprint">—</b></div>
+    </div>
+    <div class="receive-actions">
+      <button class="btn ghost small" id="newCode" title="Unieważnia stary kod i rozłącza sparowanych nadawców">Nowy kod</button>
+      <button class="btn ghost small" id="openReceive" title="Otwórz folder odbioru">Folder odbioru</button>
+    </div>
+  </section>
+</header>
 
-  <div class="layout">
-    <section class="card devices-card">
-      <div class="section-head">
-        <div><h2>1. Komputer docelowy</h2><div class="muted">Urządzenia z uruchomionym LAN Transfer w tej sieci.</div></div>
-        <button class="btn secondary small" id="refresh">Odśwież</button>
+<main class="layout">
+  <section class="card devices-card" aria-labelledby="devicesTitle">
+    <div class="section-head">
+      <div>
+        <h2 id="devicesTitle"><span class="step">1</span>Odbiorca</h2>
+        <div class="muted">Komputery z LAN Transfer w tej sieci.</div>
       </div>
-      <div id="devices" class="devices"><div class="muted">Szukam urządzeń…</div></div>
-    </section>
+      <button class="btn secondary small" id="refresh">Odśwież</button>
+    </div>
+    <div id="devices" class="devices"><div class="empty">Szukam urządzeń…</div></div>
+    <details class="manual">
+      <summary>Połącz ręcznie (adres IP)</summary>
+      <form id="manualForm" class="manual-form">
+        <input id="manualAddress" placeholder="np. 192.168.0.15 lub 192.168.0.15:45455" autocomplete="off" spellcheck="false">
+        <button class="btn secondary small" type="submit">Połącz</button>
+      </form>
+    </details>
+  </section>
 
-    <section class="card">
-      <h2>2. Co wysłać</h2>
+  <section class="card" aria-labelledby="pickTitle">
+    <h2 id="pickTitle"><span class="step">2</span>Co wysłać</h2>
+    <div class="drop-zone" id="dropZone">
+      <div class="drop-icon" aria-hidden="true">⬇</div>
+      <div class="drop-note"><b>Przeciągnij tu pliki lub foldery</b><br><span class="muted">albo</span></div>
       <div class="picker-actions">
         <button class="btn" id="pickFiles">Wybierz pliki</button>
         <button class="btn secondary" id="pickFolder">Wybierz folder</button>
-        <button class="btn ghost" id="clearSelection">Wyczyść</button>
       </div>
-      <div class="drop-zone" id="dropZone">
-        <div class="drop-note"><b>Przeciągnij i upuść</b> tutaj pliki lub foldery z Eksploratora Windows</div>
-        <div id="selection" class="selection"><div class="empty">Nic jeszcze nie wybrano.</div></div>
+      <form id="pathForm" class="path-form">
+        <input id="pathInput" placeholder="…lub wklej ścieżkę pliku/folderu" aria-label="Ścieżka do dodania" autocomplete="off" spellcheck="false">
+        <button class="btn ghost small" type="submit">Dodaj</button>
+      </form>
+    </div>
+    <div class="selection-head hidden" id="selectionHead">
+      <span id="selectionCount"></span>
+      <button class="link-btn" id="clearSelection">Wyczyść</button>
+    </div>
+    <div id="selection" class="selection" role="list"></div>
+    <div id="previewPanel" class="preview-panel hidden">
+      <div class="preview-head">
+        <div class="preview-title-wrap"><b id="previewTitle">Podgląd</b><span id="previewMeta"></span></div>
+        <button class="icon-btn" id="closePreview" title="Zamknij podgląd" aria-label="Zamknij podgląd">×</button>
       </div>
-      <div id="previewPanel" class="preview-panel hidden">
-        <div class="preview-head">
-          <div class="preview-title-wrap">
-            <b id="previewTitle">Podgląd</b>
-            <span id="previewMeta"></span>
-          </div>
-          <button class="remove-btn" id="closePreview" title="Zamknij podgląd">×</button>
-        </div>
-        <div id="previewBody" class="preview-body"></div>
-      </div>
-    </section>
+      <div id="previewBody" class="preview-body"></div>
+    </div>
+  </section>
 
-    <section class="card">
-      <h2>3. Gdzie wysłać</h2>
-      <div id="remoteHint" class="muted">Najpierw wybierz komputer docelowy.</div>
+  <section class="card" aria-labelledby="destTitle">
+    <h2 id="destTitle"><span class="step">3</span>Gdzie zapisać</h2>
+    <div id="remoteHint" class="muted">Najpierw wybierz i sparuj odbiorcę.</div>
+    <div id="destBox" class="hidden">
+      <label class="radio"><input type="radio" name="destMode" value="default" checked><span>Folder odbioru na komputerze <b id="destPeer"></b></span></label>
+      <label class="radio"><input type="radio" name="destMode" value="custom"><span>Wybrany folder na odbiorcy</span></label>
       <div id="remoteBrowser" class="remote-browser hidden">
         <div class="pathbar">
-          <button class="icon-btn" id="remoteUp" title="Folder wyżej">↑</button>
+          <button class="icon-btn" id="remoteUp" title="Folder wyżej" aria-label="Folder wyżej">↑</button>
           <div class="remote-path" id="remotePath">Dyski</div>
-          <button class="btn secondary small" id="remoteRefresh">Odśwież</button>
+          <button class="icon-btn" id="remoteRefresh" title="Odśwież" aria-label="Odśwież">⟳</button>
         </div>
         <div id="remoteEntries" class="folder-list"></div>
-        <div class="destination-box">Wybrany folder: <b id="destinationLabel">—</b></div>
       </div>
-    </section>
-
-    <section class="card send-card">
-      <div>
-        <h2>4. Wyślij</h2>
-        <div class="muted" id="summary">Wybierz pliki, komputer i folder docelowy.</div>
-      </div>
+    </div>
+    <div class="send-row">
+      <div class="muted" id="summary">Wybierz pliki i odbiorcę.</div>
       <button id="send" class="btn send-btn" disabled>Wyślij</button>
-      <div id="status" class="status"></div>
-    </section>
-  </div>
-</div>
+    </div>
+  </section>
+
+  <section class="card wide" aria-labelledby="transfersTitle">
+    <div class="section-head">
+      <h2 id="transfersTitle">Transfery</h2>
+      <button class="link-btn hidden" id="clearFinished">Usuń zakończone</button>
+    </div>
+    <div id="transfers" class="transfers" aria-live="polite"><div class="empty compact">Brak aktywnych transferów.</div></div>
+  </section>
+
+  <section class="card wide" aria-labelledby="historyTitle">
+    <div class="section-head">
+      <h2 id="historyTitle">Historia</h2>
+      <button class="link-btn" id="clearHistory">Wyczyść historię</button>
+    </div>
+    <div id="history" class="history"><div class="empty compact">Historia jest pusta.</div></div>
+  </section>
+</main>
+
+<dialog id="pairDialog" aria-labelledby="pairTitle">
+  <form method="dialog" id="pairForm">
+    <h2 id="pairTitle">Sparuj z <span id="pairPeer"></span></h2>
+    <p class="muted">Wpisz 6-cyfrowy kod widoczny w oknie LAN Transfer na komputerze odbiorcy.
+      Sprawdź też, czy odcisk certyfikatu jest taki sam jak tam: <b id="pairFinger">—</b></p>
+    <input id="pairCode" inputmode="numeric" autocomplete="one-time-code" maxlength="7" placeholder="000000" aria-label="Kod parowania">
+    <div class="form-error" id="pairError" role="alert"></div>
+    <div class="dialog-actions">
+      <button class="btn ghost" value="cancel" type="button" id="pairCancel">Anuluj</button>
+      <button class="btn" id="pairSubmit" type="submit">Sparuj</button>
+    </div>
+  </form>
+</dialog>
+
+<div id="toasts" class="toasts" aria-live="assertive"></div>
 <script>//__SCRIPT__</script>
 </body>
 </html>
