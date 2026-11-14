@@ -49,3 +49,14 @@ jobs:
           go-version-file: go.mod
       - run: go build ./...
       - run: go test -count=1 ./internal/fsafe/ ./internal/security/ ./internal/service/ ./internal/cli/ ./internal/discovery/ ./internal/networksetup/
+
+  readme:
+    # README.md and the 29 translations in README/ must stay in sync
+    # (structure, commands, technical literals, anchors, links).
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python tools/check_readmes.py

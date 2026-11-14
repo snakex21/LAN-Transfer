@@ -1,155 +1,129 @@
+**Languages:** [English](README.md) · [Polski](README/README.pl.md) · [Deutsch](README/README.de.md) · [Français](README/README.fr.md) · [Español](README/README.es.md) · [Italiano](README/README.it.md) · [Português](README/README.pt.md) · [Nederlands](README/README.nl.md) · [Svenska](README/README.sv.md) · [Norsk](README/README.no.md) · [Dansk](README/README.da.md) · [Suomi](README/README.fi.md) · [Čeština](README/README.cs.md) · [Slovenčina](README/README.sk.md) · [Magyar](README/README.hu.md) · [Română](README/README.ro.md) · [Türkçe](README/README.tr.md) · [Bahasa Indonesia](README/README.id.md) · [Bahasa Melayu](README/README.ms.md) · [Tiếng Việt](README/README.vi.md) · [Русский](README/README.ru.md) · [Українська](README/README.uk.md) · [Български](README/README.bg.md) · [Ελληνικά](README/README.el.md) · [العربية](README/README.ar.md) · [עברית](README/README.he.md) · [हिन्दी](README/README.hi.md) · [中文](README/README.zh.md) · [日本語](README/README.ja.md) · [한국어](README/README.ko.md)
+
 # LAN Transfer
 
-[Polski](#polski) · [English](#english)
+[![CI](https://github.com/snakex21/LAN-Transfer/actions/workflows/ci.yml/badge.svg)](https://github.com/snakex21/LAN-Transfer/actions/workflows/ci.yml) [![Release](https://img.shields.io/github/v/release/snakex21/LAN-Transfer)](https://github.com/snakex21/LAN-Transfer/releases/latest) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![Go](https://img.shields.io/badge/Go-1.23%2B-00ADD8?logo=go)](go.mod) [![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-0078D6)](#download-and-run)
 
----
+A small portable tool for sending files and folders directly between two computers on the same local network. No cloud, no account and no relay server: the data goes straight from one PC to the other over an encrypted connection. Go core, a WebView2 window and a command-line version for scripts.
 
-## Polski
+![LAN Transfer main window: a paired receiver and three items ready to send](docs/screenshots/main.png)
 
-Lekki program do bezpośredniego przesyłania plików i folderów w sieci lokalnej –
-bez chmury i bez serwera pośredniego. Rdzeń w Go, okno WebView2 (HTML/CSS/JS bez
-Reacta i Electrona) oraz CLI dla skryptów i agentów AI.
+## Contents
 
-### Funkcje
+- [Features](#features)
+- [Screenshots](#screenshots)
+- [Download and run](#download-and-run)
+- [How to pair](#how-to-pair)
+- [Sending files](#sending-files)
+- [Command line](#command-line)
+- [Ports and firewall](#ports-and-firewall)
+- [Security notes](#security-notes)
+- [Environment variables](#environment-variables)
+- [Building and tests](#building-and-tests)
+- [License](#license)
 
-- automatyczne wykrywanie komputerów w LAN (rozgłoszenie UDP, zapasowo skan /24),
-- **parowanie 6-cyfrowym kodem** widocznym na komputerze odbiorcy – bez kodu nie da
-  się nic wysłać ani przeglądać folderów,
-- **szyfrowanie TLS 1.3** (certyfikat generowany przy starcie, odcisk zapamiętywany
-  przy parowaniu i porównywany przy każdym połączeniu),
-- pliki i całe foldery (struktura zachowana, do 4 plików równolegle),
-- **wznawianie** przerwanych transferów i **suma SHA-256** każdego pliku,
-- niedokończone dane trafiają do ukrytego `.lantransfer-partial` – nigdy nie
-  powstaje ucięty plik pod docelową nazwą,
-- kolizje nazw → `plik (1).txt`, `Folder (1)`; nic nie jest nadpisywane,
-- odrzucanie niebezpiecznych nazw (`..`, ścieżki bezwzględne, `plik:strumień`,
-  `CON`, `NUL`, `COM1`…), sprawdzanie wolnego miejsca,
-- interfejs: przeciągnij i upuść, kolejka z postępem każdego pliku, prędkość, czas
-  do końca, anulowanie, wznawianie, historia, czytelne komunikaty błędów.
+## Features
 
-### Budowanie
+- Automatic discovery of other computers running LAN Transfer (UDP broadcast, with a throttled /24 scan as a fallback).
+- Pairing with a 6-digit code shown on the receiver. Without pairing nothing can be sent and no folders can be browsed.
+- TLS 1.3 encryption. Each run creates a new self-signed certificate; its fingerprint is pinned during pairing and checked on every connection.
+- Files and whole folders, with the folder structure preserved and up to 4 files sent in parallel.
+- Resume of interrupted transfers and a SHA-256 check of every file.
+- Unfinished data is kept in a hidden `.lantransfer-partial` folder, so a truncated file never appears under its final name.
+- Name collisions become `file (1).txt` or `Folder (1)`; existing files are never overwritten.
+- Dangerous names are rejected (`..`, absolute paths, `file:stream` alternate data streams, reserved names such as `CON`, `NUL`, `COM1`). Free disk space is checked before receiving.
+- Drag and drop from Explorer, a queue with per-file progress, speed, time remaining, cancel, resume and a history of sent and received items.
+- Portable: a single EXE, settings and history in a `data` folder next to it.
 
-Wymagany Go 1.23+ i Windows 10/11 (WebView2 jest w systemie).
+The user interface is currently in Polish.
 
-```powershell
-build.bat
-go test ./...
-```
+## Screenshots
 
-Powstają `LANTransfer.exe` (okno) i `LANTransferCLI.exe` (konsola).
-
-### Użycie
-
-1. Uruchom LAN Transfer na obu komputerach.
-2. Na nadawcy kliknij odbiorcę i wpisz kod parowania z ekranu odbiorcy
-   (sprawdź też, czy odcisk certyfikatu jest taki sam).
-3. Przeciągnij pliki/foldery i kliknij **Wyślij**. Pliki trafiają do
-   `Pobrane\LAN Transfer` albo do folderu wskazanego na odbiorcy.
-
-„Nowy kod” unieważnia stary kod i wszystkie dotychczasowe parowania.
-Po restarcie odbiorcy trzeba sparować się ponownie.
-
-### CLI
-
-```powershell
-LANTransferCLI.exe serve                          # odbiór; wypisuje kod parowania
-LANTransferCLI.exe devices                        # lista urządzeń (JSON)
-LANTransferCLI.exe send plik.zip folder --to 192.168.0.15 --code 123456 [--dest D:\Odbior] [--parallel 4] [--json]
-LANTransferCLI.exe send "C:\sciezka\plik.zip" NAZWA-KOMPUTERA --code 123456
-```
-
-Kod można też podać w `LANTRANSFER_CODE`. Dla odbiornika bez okna stały kod
-ustawia `LANTRANSFER_PIN`. Przerwane `send` wznawia się, uruchamiając tę samą
-komendę ponownie.
-
-### Porty i zapora
-
-- UDP 45454 – wykrywanie, TCP 45455 – transfer (HTTPS).
-- Przy pierwszym starcie program prosi (UAC) o dodanie dwóch reguł zapory
-  ograniczonych do lokalnej podsieci (`remoteip=LocalSubnet`).
-
-### Zmienne środowiskowe (testy, automatyzacja)
-
-| Zmienna | Znaczenie |
+| Pairing | Sending with progress |
 |---|---|
-| `LANTRANSFER_PORT`, `LANTRANSFER_UDP_PORT` | inne porty |
-| `LANTRANSFER_RECEIVE_DIR`, `LANTRANSFER_DATA_DIR` | folder odbioru / danych programu |
-| `LANTRANSFER_LOOPBACK=1` | tylko 127.0.0.1: brak rozgłoszeń i skanowania LAN (testy na jednym komputerze) |
-| `LANTRANSFER_PEER_UDP_PORTS` | porty UDP innych instancji w trybie loopback |
-| `LANTRANSFER_NO_FIREWALL=1` | nie proponuj reguł zapory |
-| `LANTRANSFER_PIN` / `LANTRANSFER_CODE` | stały kod odbiorcy / kod podawany przez nadawcę |
+| ![Pairing dialog with the 6-digit code and the certificate fingerprint](docs/screenshots/pairing.png) | ![Transfer queue with progress, speed and time remaining](docs/screenshots/sending.png) |
+| **Resume after cancel** | **Receiver: history** |
+| ![A cancelled transfer resumed from the received offset, SHA-256 verified](docs/screenshots/resume.png) | ![Receiver window with received items in the history](docs/screenshots/history.png) |
 
-### Bezpieczeństwo – ograniczenia
+## Download and run
 
-- Wykrywanie (UDP) nie jest uwierzytelnione – to tylko podpowiedź. Zaufanie daje
-  parowanie: kod + przypięty odcisk certyfikatu.
-- Przy *pierwszym* parowaniu aktywny atakujący w tej samej sieci (MITM) mógłby
-  podszyć się pod odbiorcę. Dlatego warto porównać odcisk certyfikatu na obu
-  ekranach.
-- Sparowany nadawca może zapisać pliki w dowolnym istniejącym folderze odbiorcy
-  (funkcja „Wybrany folder na odbiorcy”) i przeglądać jego foldery. Paruj tylko
-  zaufane komputery.
+1. Download `LANTransfer-2.0.0-windows-amd64.zip` from [Releases](https://github.com/snakex21/LAN-Transfer/releases/latest) and check it against the published `.sha256` file.
+2. Extract it to any folder on both computers.
+3. Start `LANTransfer.exe`. On the first start Windows asks (UAC) for permission to add two firewall rules; see [Ports and firewall](#ports-and-firewall).
 
-### Testy
+Requirements: Windows 10 or 11 (64-bit) with the WebView2 runtime, which is part of current Windows. Both computers must run version 2. Version 2 cannot talk to version 1.
 
-`go test ./...` uruchamia m.in. testy end-to-end na 127.0.0.1: parowanie i
-blokada po błędnych kodach, odrzucanie nieuwierzytelnionych żądań, pliki 0 B –
-96 MB, foldery z Unicode i ścieżkami > 260 znaków, kolizje, wrogie nazwy,
-błędna suma kontrolna, anulowanie i wznowienie, brak miejsca, limit rozmiaru,
-przypinanie certyfikatu, kolejka w GUI. Benchmark: zobacz
-`internal/service/bench_test.go`.
+## How to pair
 
----
+1. Start LAN Transfer on both computers. The receiver shows its pairing code and certificate fingerprint in the top-right corner.
+2. On the sending computer, click the receiver in the **Odbiorca** (Receiver) list. If it does not appear, use **Połącz ręcznie** (Connect manually) and enter its IP address.
+3. Type the 6-digit code from the receiver's screen and compare the certificate fingerprint shown in the dialog with the one on the receiver. If they differ, do not continue.
+4. Click **Sparuj** (Pair). The device now shows **sparowano** (paired).
 
-## English
+After 5 wrong codes from one computer the receiver blocks further attempts from it. **Nowy kod** (New code) creates a new code and cancels all existing pairings. The receiver creates a new code and certificate every time it starts, so after the receiver restarts, pair again.
 
-A small tool for sending files and folders directly between computers on a
-local network – no cloud, no relay server. Go core, a WebView2 window
-(plain HTML/CSS/JS) and a CLI for scripts and AI agents. The UI is in Polish.
+## Sending files
 
-### Features
+1. Pair with the receiver.
+2. Drag files or folders onto the window, use **Wybierz pliki** / **Wybierz folder** (Choose files / Choose folder), or paste a path.
+3. Choose the destination: the receiver's default folder (`Downloads\LAN Transfer`) or another existing folder on the receiver.
+4. Click **Wyślij** (Send). Each item shows progress, speed and time remaining and can be cancelled. A cancelled or interrupted transfer can be resumed; only the missing part is sent.
 
-- automatic discovery (UDP broadcast, /24 scan as a fallback),
-- **pairing with a 6-digit code** shown on the receiver – nothing can be sent
-  or browsed without it,
-- **TLS 1.3** with a per-process self-signed certificate whose fingerprint is
-  pinned at pairing,
-- files and whole folders (structure preserved, 4 files in parallel),
-- **resume** of interrupted transfers and a **SHA-256** check for every file,
-- partial data lives in a hidden `.lantransfer-partial` folder; a truncated
-  file never appears under its final name,
-- name collisions become `file (1).txt` / `Folder (1)`; nothing is overwritten,
-- hostile names (`..`, absolute paths, `file:stream`, `CON`, `NUL`, `COM1`…)
-  are rejected; free space is checked before receiving,
-- UI: drag and drop, queue with per-file progress, speed, ETA, cancel, resume,
-  history and clear error messages.
+## Command line
 
-### Build
+`LANTransferCLI.exe` is the same program without a window, for scripts and automation.
 
-Go 1.23+ on Windows 10/11 (WebView2 ships with the OS).
+```powershell
+LANTransferCLI.exe serve                          # receive; prints the pairing code
+LANTransferCLI.exe devices                        # list devices (JSON)
+LANTransferCLI.exe send file.zip folder --to 192.168.0.15 --code 123456 [--dest D:\Inbox] [--parallel 4] [--json]
+LANTransferCLI.exe version
+```
+
+The code can also be passed in `LANTRANSFER_CODE`. A receiver without a window can use a fixed code from `LANTRANSFER_PIN`. Running the same `send` command again resumes an interrupted transfer.
+
+## Ports and firewall
+
+- UDP 45454: discovery. TCP 45455: transfer (HTTPS).
+- On the first start the app asks once (UAC) to add two inbound rules: `LAN Transfer 2 Discovery (UDP)` and `LAN Transfer 2 Transfer (TCP)`.
+- The rules accept connections only from the local subnet (`remoteip=LocalSubnet`) and only on the Private and Domain network profiles (`profile=private,domain`). On a network that Windows marks as Public (café, hotel, airport) other computers cannot connect to LAN Transfer.
+- If the receiver is not visible on your home network, check that the network is set to Private in the Windows network settings.
+- Version 1 created rules named `LAN Transfer Discovery` and `LAN Transfer Transfer` for all profiles, Public included. If version 2 finds them, it shows a banner offering to replace them. Nothing is changed until you click **Zaktualizuj reguły** (Update rules) and confirm the Windows prompt.
+
+## Security notes
+
+- Discovery over UDP is not authenticated; it is only a hint. Trust comes from pairing: the code plus the pinned certificate fingerprint.
+- During the first pairing an active attacker on the same network (man in the middle) could pretend to be the receiver. Compare the certificate fingerprint on both screens before pairing.
+- A paired sender can browse the receiver's folders and save files into any existing folder there (the custom destination option). Pair only computers you trust, and use **Nowy kod** to revoke all pairings.
+- The firewall rules do not open the ports on networks marked Public.
+
+## Environment variables
+
+These are meant for tests and automation; normal use needs none of them.
+
+| Variable | Meaning |
+|---|---|
+| `LANTRANSFER_PORT`, `LANTRANSFER_UDP_PORT` | other ports |
+| `LANTRANSFER_RECEIVE_DIR`, `LANTRANSFER_DATA_DIR` | receive folder, program data folder |
+| `LANTRANSFER_NAME` | computer name shown to others |
+| `LANTRANSFER_LOOPBACK=1` | 127.0.0.1 only: no broadcasts, no LAN scan, no firewall rules |
+| `LANTRANSFER_PEER_UDP_PORTS` | UDP ports of other instances in loopback mode |
+| `LANTRANSFER_NO_FIREWALL=1` | do not create or check firewall rules |
+| `LANTRANSFER_PIN`, `LANTRANSFER_CODE` | fixed receiver code, code used by the sender |
+
+## Building and tests
+
+Go 1.23 or newer on Windows 10/11.
 
 ```powershell
 build.bat
 go test ./...
 ```
 
-### Usage
+`build.bat` runs the tests and builds `LANTransfer.exe` (window) and `LANTransferCLI.exe` (console) with the version from `VERSION` (default `2.0.0`). The tests include end-to-end transfers over 127.0.0.1: pairing and lockout, rejected unauthenticated requests, files from 0 B to 96 MB, Unicode folders and paths over 260 characters, name collisions, hostile names, a wrong checksum, cancel and resume, a full disk and certificate pinning.
 
-Start LAN Transfer on both computers, click the receiver, type the pairing
-code displayed on the receiver (and compare the certificate fingerprint), then
-drop files and press **Wyślij** (Send). See the CLI section above for
-automation; `LANTRANSFER_CODE` / `LANTRANSFER_PIN` provide codes
-non-interactively. Re-running an interrupted `send` resumes it.
+Release notes: [docs/releases/v2.0.0.md](docs/releases/v2.0.0.md).
 
-### Ports and firewall
+## License
 
-UDP 45454 (discovery) and TCP 45455 (HTTPS transfer). On first start the app
-asks (UAC) to add two inbound rules limited to the local subnet.
-
-### Security notes
-
-Discovery is unauthenticated and only a hint; trust comes from pairing (code +
-pinned certificate). An active man-in-the-middle during the *first* pairing is
-not prevented by the protocol – compare the fingerprint shown on both screens.
-A paired sender can browse the receiver's folders and write into any existing
-folder there, so pair only computers you trust.
+MIT, see [LICENSE](LICENSE).
