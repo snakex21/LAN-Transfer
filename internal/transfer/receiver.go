@@ -26,8 +26,6 @@ const partialDirName = ".lantransfer-partial"
 // spaceMargin is kept free on the receiving volume.
 const spaceMargin = 64 << 20
 
-const copyBufferSize = 1 << 20
-
 // Receiver stores files uploaded by paired peers.
 type Receiver struct {
 	Directory   string                           // default destination
@@ -228,7 +226,13 @@ func (r *Receiver) receive(req *http.Request, f *fileRequest, peer string) (stri
 	remaining := f.size - f.offset
 	progress := r.Incoming.start(peer, f)
 	body := io.LimitReader(req.Body, remaining+1)
-	written, copyErr := copyWithProgress(io.MultiWriter(file, hasher), body, progress)
+	var written int64
+	var copyErr error
+	if remaining > chunkSize {
+		written, copyErr = copyHashing(file, hasher, body, progress)
+	} else {
+		written, copyErr = copySmall(io.MultiWriter(file, hasher), body, progress)
+	}
 	switch {
 	case copyErr != nil && isNoSpace(copyErr):
 		return "", &httpError{status: http.StatusInsufficientStorage, code: protocol.CodeNoSpace, msg: "zabrakło miejsca na dysku odbiorcy"}
@@ -384,28 +388,28 @@ func isNoSpace(err error) bool {
 	return false
 }
 
-func copyWithProgress(dst io.Writer, src io.Reader, progress func(int64)) (int64, error) {
-	buf := make([]byte, copyBufferSize)
-	var total int64
-	for {
-		n, readErr := src.Read(buf)
-		if n > 0 {
-			written, writeErr := dst.Write(buf[:n])
-			total += int64(written)
-			if progress != nil {
-				progress(int64(written))
-			}
-			if writeErr != nil {
-				return total, writeErr
-			}
+// copySmall handles files up to one chunk without starting goroutines.
+func copySmall(dst io.Writer, src io.Reader, progress func(int64)) (int64, error) {
+	c := chunkBuffers.Get().(*chunk)
+	defer chunkBuffers.Put(c)
+	n, err := io.ReadFull(src, c.buf)
+	if errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) {
+		err = nil
+	}
+	if n > 0 {
+		if _, werr := dst.Write(c.buf[:n]); werr != nil {
+			return int64(n), werr
 		}
-		if readErr == io.EOF {
-			return total, nil
-		}
-		if readErr != nil {
-			return total, readErr
+		if progress != nil {
+			progress(int64(n))
 		}
 	}
+	if err == nil && n == len(c.buf) {
+		// More data than one chunk: read the rest so the caller can detect it.
+		extra, rerr := io.Copy(io.Discard, io.LimitReader(src, 1))
+		return int64(n) + extra, rerr
+	}
+	return int64(n), err
 }
 
 func writeJSON(w http.ResponseWriter, status int, value any) {

@@ -304,30 +304,40 @@ func (s *Session) sendFile(ctx context.Context, base url.Values, e Entry, progre
 	progress.DoneBytes.Add(offset)
 	q.Set("offset", strconv.FormatInt(offset, 10))
 
-	body := &countingReader{src: file, hash: hasher, onRead: func(n int64) { progress.add(fp, n) }}
+	var sent atomic.Int64
+	onRead := func(n int64) {
+		sent.Add(n)
+		progress.add(fp, n)
+	}
+	var body io.Reader
+	if e.Size-offset > chunkSize {
+		prefetch := newPrefetchReader(file, hasher, onRead)
+		defer prefetch.Close()
+		body = prefetch
+	} else {
+		body = &hashingReader{src: file, hash: hasher, onRead: onRead}
+	}
 	_, err = s.upload(ctx, q, body, func() string { return hex.EncodeToString(hasher.Sum(nil)) })
 	if err != nil && ctx.Err() == nil {
 		// Roll back this attempt's bytes; a retry asks the receiver again.
 		// After a cancellation the counters stay: the receiver keeps the part.
-		progress.DoneBytes.Add(-(body.n + offset))
+		progress.DoneBytes.Add(-(sent.Load() + offset))
 		progress.Resumed.Add(-offset)
 	}
 	return err
 }
 
-// countingReader feeds the hash and the progress counter.
-type countingReader struct {
+// hashingReader is the simple, allocation-free path for small files.
+type hashingReader struct {
 	src    io.Reader
 	hash   hash.Hash
 	onRead func(int64)
-	n      int64
 }
 
-func (r *countingReader) Read(p []byte) (int, error) {
+func (r *hashingReader) Read(p []byte) (int, error) {
 	n, err := r.src.Read(p)
 	if n > 0 {
 		r.hash.Write(p[:n])
-		r.n += int64(n)
 		r.onRead(int64(n))
 	}
 	return n, err
