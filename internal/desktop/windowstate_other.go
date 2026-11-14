@@ -15,4 +15,3 @@ func restoreWindowState(window webview.WebView) func() {
 }
 
 func installWindowStateTracking(window webview.WebView) func() { return func() {} }
-func saveWindowState(window webview.WebView)                   {}

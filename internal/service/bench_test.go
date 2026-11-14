@@ -63,4 +63,3 @@ func benchSend(b *testing.B, src string, parallel int) {
 
 func BenchmarkLargeFile(b *testing.B)      { benchSend(b, os.Getenv("LT_BENCH_FILE"), 4) }
 func BenchmarkManySmallFiles(b *testing.B) { benchSend(b, os.Getenv("LT_BENCH_DIR"), 4) }
-
