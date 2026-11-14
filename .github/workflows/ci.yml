@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: gofmt
+        shell: bash
+        run: test -z "$(gofmt -l .)" || (gofmt -l . && exit 1)
+      - name: go vet
+        # internal/desktop is excluded: vet flags the deliberate uintptr<->pointer
+        # conversions required by the Win32/COM drag-and-drop callbacks.
+        shell: bash
+        run: go vet $(go list ./... | grep -v /internal/desktop)
+      - name: test
+        run: go test -race -count=1 ./...
+      - name: build
+        shell: bash
+        run: |
+          go build -trimpath -ldflags="-s -w -H windowsgui" -o LANTransfer.exe .
+          go build -trimpath -ldflags="-s -w" -o LANTransferCLI.exe .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lantransfer-windows
+          path: |
+            LANTransfer.exe
+            LANTransferCLI.exe
+
+  linux:
+    # The core (protocol, security, CLI) is portable; the window is Windows-only.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - run: go build ./...
+      - run: go test -count=1 ./internal/fsafe/ ./internal/security/ ./internal/service/ ./internal/cli/ ./internal/discovery/

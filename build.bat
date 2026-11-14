@@ -2,6 +2,9 @@
 setlocal
 cd /d "%~dp0"
 
+go test ./...
+if errorlevel 1 exit /b %errorlevel%
+
 go build -trimpath -ldflags="-s -w -H windowsgui" -o LANTransfer.exe .
 if errorlevel 1 exit /b %errorlevel%
 
