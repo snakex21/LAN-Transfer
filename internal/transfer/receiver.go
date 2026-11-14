@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -383,7 +384,10 @@ func isNoSpace(err error) bool {
 	var errno syscall.Errno
 	if errors.As(err, &errno) {
 		// ERROR_DISK_FULL (112), ERROR_HANDLE_DISK_FULL (39), ENOSPC
-		return errno == 112 || errno == 39 || errno == syscall.ENOSPC
+		if runtime.GOOS == "windows" && (errno == 112 || errno == 39) {
+			return true
+		}
+		return errno == syscall.ENOSPC
 	}
 	return false
 }
