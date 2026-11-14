@@ -11,6 +11,7 @@ Ein kleines portables Werkzeug, um Dateien und Ordner direkt zwischen zwei Compu
 ## Inhalt
 
 - [Funktionen](#funktionen)
+- [Sprache der Benutzeroberfläche](#sprache-der-benutzeroberfläche)
 - [Screenshots](#screenshots)
 - [Download und Start](#download-und-start)
 - [Geräte koppeln](#geräte-koppeln)
@@ -34,8 +35,19 @@ Ein kleines portables Werkzeug, um Dateien und Ordner direkt zwischen zwei Compu
 - Gefährliche Namen werden abgelehnt (`..`, absolute Pfade, alternative Datenströme wie `file:stream`, reservierte Namen wie `CON`, `NUL`, `COM1`). Vor dem Empfang wird der freie Speicherplatz geprüft.
 - Drag & Drop aus dem Datei-Explorer, eine Warteschlange mit Fortschritt pro Datei, Geschwindigkeit, Restzeit, Abbrechen, Fortsetzen sowie ein Verlauf gesendeter und empfangener Elemente.
 - Portabel: eine einzige EXE-Datei, Einstellungen und Verlauf in einem Ordner `data` daneben.
+- Fenster, Fenstertitel und Ausgaben der Kommandozeile in 30 Sprachen (dieselben wie bei dieser README), automatisch anhand der Windows-Anzeigesprache gewählt; Layout von rechts nach links für Arabisch und Hebräisch.
 
-Die Benutzeroberfläche ist derzeit auf Polnisch.
+## Sprache der Benutzeroberfläche
+
+LAN Transfer spricht dieselben 30 Sprachen wie diese README. Beim ersten Start wird die Anzeigesprache von Windows verwendet (die erste unterstützte Sprache in der Windows-Sprachliste); verwendet Windows eine Sprache, die nicht in der Liste steht, ist die Oberfläche auf Englisch.
+
+Um die Sprache zu ändern, klicken Sie oben rechts auf das Zahnradsymbol (**Einstellungen**) und wählen eine Sprache aus. Fenster, Titel und alle Meldungen wechseln sofort, und die Auswahl wird in `data\settings.json` gespeichert. **Automatisch (Windows)** folgt wieder der Anzeigesprache von Windows. Zahlen, Größen, Geschwindigkeiten, Datumsangaben und Pluralformen richten sich nach den Regeln der gewählten Sprache; Arabisch und Hebräisch verwenden ein gespiegeltes Layout von rechts nach links, während Pfade, IP-Adressen, Codes und Fingerabdrücke von links nach rechts bleiben. Meldungen des anderen Computers (zum Beispiel „nicht genügend Speicherplatz auf dem Datenträger des Empfängers“) werden in Ihrer Sprache angezeigt, nicht in der des Empfängers.
+
+`LANTransferCLI.exe` verwendet dieselbe Sprache. `LANTRANSFER_LANG` (zum Beispiel `LANTRANSFER_LANG=de`) hat sowohl im Fenster als auch in der Kommandozeile Vorrang vor der gespeicherten Auswahl.
+
+| English | Deutsch | العربية (RTL) |
+|---|---|---|
+| ![LAN Transfer auf Englisch](../docs/screenshots/lang-en.png) | ![LAN Transfer auf Deutsch](../docs/screenshots/lang-de.png) | ![LAN Transfer auf Arabisch, Layout von rechts nach links](../docs/screenshots/lang-ar.png) |
 
 ## Screenshots
 
@@ -47,7 +59,7 @@ Die Benutzeroberfläche ist derzeit auf Polnisch.
 
 ## Download und Start
 
-1. Laden Sie `LANTransfer-2.0.0-windows-amd64.zip` unter [Releases](https://github.com/snakex21/LAN-Transfer/releases/latest) herunter und prüfen Sie die Datei anhand der veröffentlichten `.sha256`-Datei.
+1. Laden Sie `LANTransfer-2.1.0-windows-amd64.zip` unter [Releases](https://github.com/snakex21/LAN-Transfer/releases/latest) herunter und prüfen Sie die Datei anhand der veröffentlichten `.sha256`-Datei.
 2. Entpacken Sie sie auf beiden Computern in einen beliebigen Ordner.
 3. Starten Sie `LANTransfer.exe`. Beim ersten Start fragt Windows (UAC) um Erlaubnis, zwei Firewallregeln hinzuzufügen; siehe [Ports und Firewall](#ports-und-firewall).
 
@@ -56,18 +68,18 @@ Voraussetzungen: Windows 10 oder 11 (64 Bit) mit der WebView2-Runtime, die Besta
 ## Geräte koppeln
 
 1. Starten Sie LAN Transfer auf beiden Computern. Der Empfänger zeigt oben rechts seinen Kopplungscode und den Fingerabdruck seines Zertifikats an.
-2. Klicken Sie auf dem sendenden Computer in der Liste **Odbiorca** (Empfänger) auf den Empfänger. Wenn er dort nicht erscheint, verwenden Sie **Połącz ręcznie** (Manuell verbinden) und geben Sie seine IP-Adresse ein.
+2. Klicken Sie auf dem sendenden Computer in der Liste **Empfänger** auf den Empfänger. Wenn er dort nicht erscheint, verwenden Sie **Manuell verbinden (IP-Adresse)** und geben Sie seine IP-Adresse ein.
 3. Geben Sie den 6-stelligen Code vom Bildschirm des Empfängers ein und vergleichen Sie den im Dialog angezeigten Zertifikat-Fingerabdruck mit dem auf dem Empfänger. Wenn sie sich unterscheiden, brechen Sie ab.
-4. Klicken Sie auf **Sparuj** (Koppeln). Das Gerät wird nun als **sparowano** (gekoppelt) angezeigt.
+4. Klicken Sie auf **Koppeln**. Das Gerät wird nun als **✓ gekoppelt** angezeigt.
 
-Nach 5 falschen Codes von einem Computer sperrt der Empfänger weitere Versuche von diesem Computer. **Nowy kod** (Neuer Code) erzeugt einen neuen Code und hebt alle bestehenden Kopplungen auf. Der Empfänger erzeugt bei jedem Start einen neuen Code und ein neues Zertifikat; nach einem Neustart des Empfängers müssen Sie daher erneut koppeln.
+Nach 5 falschen Codes von einem Computer sperrt der Empfänger weitere Versuche von diesem Computer. **Neuer Code** erzeugt einen neuen Code und hebt alle bestehenden Kopplungen auf. Der Empfänger erzeugt bei jedem Start einen neuen Code und ein neues Zertifikat; nach einem Neustart des Empfängers müssen Sie daher erneut koppeln.
 
 ## Dateien senden
 
 1. Koppeln Sie sich mit dem Empfänger.
-2. Ziehen Sie Dateien oder Ordner in das Fenster, verwenden Sie **Wybierz pliki** / **Wybierz folder** (Dateien auswählen / Ordner auswählen) oder fügen Sie einen Pfad ein.
+2. Ziehen Sie Dateien oder Ordner in das Fenster, verwenden Sie **Dateien auswählen** / **Ordner auswählen** oder fügen Sie einen Pfad ein.
 3. Wählen Sie das Ziel: den Standardordner des Empfängers (`Downloads\LAN Transfer`) oder einen anderen vorhandenen Ordner auf dem Empfänger.
-4. Klicken Sie auf **Wyślij** (Senden). Jedes Element zeigt Fortschritt, Geschwindigkeit und Restzeit an und kann abgebrochen werden. Eine abgebrochene oder unterbrochene Übertragung lässt sich fortsetzen; dabei wird nur der fehlende Teil gesendet.
+4. Klicken Sie auf **Senden**. Jedes Element zeigt Fortschritt, Geschwindigkeit und Restzeit an und kann abgebrochen werden. Eine abgebrochene oder unterbrochene Übertragung lässt sich fortsetzen; dabei wird nur der fehlende Teil gesendet.
 
 ## Kommandozeile
 
@@ -88,13 +100,13 @@ Der Code kann auch über `LANTRANSFER_CODE` übergeben werden. Ein Empfänger oh
 - Beim ersten Start fragt die App einmalig (UAC), ob zwei eingehende Regeln hinzugefügt werden dürfen: `LAN Transfer 2 Discovery (UDP)` und `LAN Transfer 2 Transfer (TCP)`.
 - Die Regeln akzeptieren Verbindungen nur aus dem lokalen Subnetz (`remoteip=LocalSubnet`) und nur in den Netzwerkprofilen „Privat“ und „Domäne“ (`profile=private,domain`). In einem Netzwerk, das Windows als öffentlich einstuft (Café, Hotel, Flughafen), können andere Computer keine Verbindung zu LAN Transfer herstellen.
 - Wenn der Empfänger in Ihrem Heimnetz nicht sichtbar ist, prüfen Sie in den Windows-Netzwerkeinstellungen, ob das Netzwerk als privat eingestellt ist.
-- Version 1 hat Regeln namens `LAN Transfer Discovery` und `LAN Transfer Transfer` für alle Profile angelegt, einschließlich „Öffentlich“. Findet Version 2 diese Regeln, zeigt sie ein Banner an, das deren Ersetzung anbietet. Es wird nichts geändert, bevor Sie auf **Zaktualizuj reguły** (Regeln aktualisieren) klicken und die Windows-Abfrage bestätigen.
+- Version 1 hat Regeln namens `LAN Transfer Discovery` und `LAN Transfer Transfer` für alle Profile angelegt, einschließlich „Öffentlich“. Findet Version 2 diese Regeln, zeigt sie ein Banner an, das deren Ersetzung anbietet. Es wird nichts geändert, bevor Sie auf **Regeln aktualisieren** klicken und die Windows-Abfrage bestätigen.
 
 ## Sicherheitshinweise
 
 - Die Erkennung über UDP ist nicht authentifiziert; sie ist nur ein Hinweis. Vertrauen entsteht durch die Kopplung: den Code plus den festgelegten Zertifikat-Fingerabdruck.
 - Bei der ersten Kopplung könnte sich ein aktiver Angreifer im selben Netzwerk (Man-in-the-Middle) als Empfänger ausgeben. Vergleichen Sie vor dem Koppeln den Zertifikat-Fingerabdruck auf beiden Bildschirmen.
-- Ein gekoppelter Sender kann die Ordner des Empfängers durchsuchen und Dateien in jeden dort vorhandenen Ordner speichern (Option für ein eigenes Ziel). Koppeln Sie nur Computer, denen Sie vertrauen, und verwenden Sie **Nowy kod**, um alle Kopplungen zu widerrufen.
+- Ein gekoppelter Sender kann die Ordner des Empfängers durchsuchen und Dateien in jeden dort vorhandenen Ordner speichern (Option für ein eigenes Ziel). Koppeln Sie nur Computer, denen Sie vertrauen, und verwenden Sie **Neuer Code**, um alle Kopplungen zu widerrufen.
 - Die Firewallregeln öffnen die Ports nicht in Netzwerken, die als öffentlich eingestuft sind.
 
 ## Umgebungsvariablen
@@ -106,6 +118,7 @@ Diese sind für Tests und Automatisierung gedacht; im normalen Betrieb wird kein
 | `LANTRANSFER_PORT`, `LANTRANSFER_UDP_PORT` | andere Ports |
 | `LANTRANSFER_RECEIVE_DIR`, `LANTRANSFER_DATA_DIR` | Empfangsordner, Datenordner des Programms |
 | `LANTRANSFER_NAME` | für andere angezeigter Computername |
+| `LANTRANSFER_LANG` | Sprache der Oberfläche und der Kommandozeile (`en`, `de`, `pl`, …); hat Vorrang vor der gespeicherten Auswahl |
 | `LANTRANSFER_LOOPBACK=1` | nur 127.0.0.1: keine Broadcasts, kein LAN-Scan, keine Firewallregeln |
 | `LANTRANSFER_PEER_UDP_PORTS` | UDP-Ports anderer Instanzen im Loopback-Modus |
 | `LANTRANSFER_NO_FIREWALL=1` | keine Firewallregeln anlegen oder prüfen |
@@ -118,11 +131,14 @@ Go 1.23 oder neuer unter Windows 10/11.
 ```powershell
 build.bat
 go test ./...
+python tools/check_i18n.py
 ```
 
-`build.bat` führt die Tests aus und baut `LANTransfer.exe` (mit Fenster) und `LANTransferCLI.exe` (Konsole) mit der Version aus `VERSION` (Standard `2.0.0`). Die Tests umfassen End-to-End-Übertragungen über 127.0.0.1: Kopplung und Sperre, abgelehnte nicht authentifizierte Anfragen, Dateien von 0 B bis 96 MB, Unicode-Ordner und Pfade mit mehr als 260 Zeichen, Namenskonflikte, bösartige Namen, eine falsche Prüfsumme, Abbrechen und Fortsetzen, eine volle Festplatte sowie Zertifikat-Pinning.
+`build.bat` führt die Tests aus und baut `LANTransfer.exe` (mit Fenster) und `LANTransferCLI.exe` (Konsole) mit der Version aus `VERSION` (Standard `2.1.0`). Die Tests umfassen End-to-End-Übertragungen über 127.0.0.1: Kopplung und Sperre, abgelehnte nicht authentifizierte Anfragen, Dateien von 0 B bis 96 MB, Unicode-Ordner und Pfade mit mehr als 260 Zeichen, Namenskonflikte, bösartige Namen, eine falsche Prüfsumme, Abbrechen und Fortsetzen, eine volle Festplatte sowie Zertifikat-Pinning.
 
-Versionshinweise: [docs/releases/v2.0.0.md](../docs/releases/v2.0.0.md).
+Die Übersetzungen liegen in `locales/ui.<code>.json` (Polnisch ist die Ausgangssprache, Englisch die Ersatzsprache). `tools/check_i18n.py` prüft, ob alle 30 Dateien dieselben Schlüssel, Platzhalter und Pluralformen haben und keine polnischen Reste enthalten; ein Go-Test prüft, ob jeder vom Programm verwendete Schlüssel in jeder Sprache vorhanden ist.
+
+Versionshinweise: [docs/releases/v2.1.0.md](../docs/releases/v2.1.0.md) · [v2.0.0](../docs/releases/v2.0.0.md).
 
 ## Lizenz
 

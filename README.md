@@ -11,6 +11,7 @@ A small portable tool for sending files and folders directly between two compute
 ## Contents
 
 - [Features](#features)
+- [Interface language](#interface-language)
 - [Screenshots](#screenshots)
 - [Download and run](#download-and-run)
 - [How to pair](#how-to-pair)
@@ -34,8 +35,19 @@ A small portable tool for sending files and folders directly between two compute
 - Dangerous names are rejected (`..`, absolute paths, `file:stream` alternate data streams, reserved names such as `CON`, `NUL`, `COM1`). Free disk space is checked before receiving.
 - Drag and drop from Explorer, a queue with per-file progress, speed, time remaining, cancel, resume and a history of sent and received items.
 - Portable: a single EXE, settings and history in a `data` folder next to it.
+- The window, its title and the command-line output in 30 languages (the same as this README), chosen automatically from the Windows display language; right-to-left layout for Arabic and Hebrew.
 
-The user interface is currently in Polish.
+## Interface language
+
+LAN Transfer speaks the same 30 languages as this README. On the first start it uses the Windows display language (the first supported language in the Windows language list); if Windows uses a language that is not on the list, the interface is in English.
+
+To change it, click the gear button (**Settings**) in the top-right corner and pick a language. The window, its title and all messages switch immediately, and the choice is saved in `data\settings.json`. **Automatic (Windows)** follows the Windows display language again. Numbers, sizes, speeds, dates and plural forms follow the rules of the chosen language; Arabic and Hebrew use a mirrored right-to-left layout, while paths, IP addresses, codes and fingerprints stay left-to-right. Messages from the other computer (for example "not enough space on the receiver's disk") are shown in your language, not in the receiver's.
+
+`LANTransferCLI.exe` uses the same language. `LANTRANSFER_LANG` (for example `LANTRANSFER_LANG=de`) overrides the saved choice for both the window and the command line.
+
+| English | Deutsch | العربية (RTL) |
+|---|---|---|
+| ![LAN Transfer in English](docs/screenshots/lang-en.png) | ![LAN Transfer auf Deutsch](docs/screenshots/lang-de.png) | ![LAN Transfer in Arabic, right-to-left layout](docs/screenshots/lang-ar.png) |
 
 ## Screenshots
 
@@ -47,7 +59,7 @@ The user interface is currently in Polish.
 
 ## Download and run
 
-1. Download `LANTransfer-2.0.0-windows-amd64.zip` from [Releases](https://github.com/snakex21/LAN-Transfer/releases/latest) and check it against the published `.sha256` file.
+1. Download `LANTransfer-2.1.0-windows-amd64.zip` from [Releases](https://github.com/snakex21/LAN-Transfer/releases/latest) and check it against the published `.sha256` file.
 2. Extract it to any folder on both computers.
 3. Start `LANTransfer.exe`. On the first start Windows asks (UAC) for permission to add two firewall rules; see [Ports and firewall](#ports-and-firewall).
 
@@ -56,18 +68,18 @@ Requirements: Windows 10 or 11 (64-bit) with the WebView2 runtime, which is part
 ## How to pair
 
 1. Start LAN Transfer on both computers. The receiver shows its pairing code and certificate fingerprint in the top-right corner.
-2. On the sending computer, click the receiver in the **Odbiorca** (Receiver) list. If it does not appear, use **Połącz ręcznie** (Connect manually) and enter its IP address.
+2. On the sending computer, click the receiver in the **Receiver** list. If it does not appear, use **Connect manually (IP address)** and enter its IP address.
 3. Type the 6-digit code from the receiver's screen and compare the certificate fingerprint shown in the dialog with the one on the receiver. If they differ, do not continue.
-4. Click **Sparuj** (Pair). The device now shows **sparowano** (paired).
+4. Click **Pair**. The device now shows **✓ paired**.
 
-After 5 wrong codes from one computer the receiver blocks further attempts from it. **Nowy kod** (New code) creates a new code and cancels all existing pairings. The receiver creates a new code and certificate every time it starts, so after the receiver restarts, pair again.
+After 5 wrong codes from one computer the receiver blocks further attempts from it. **New code** creates a new code and cancels all existing pairings. The receiver creates a new code and certificate every time it starts, so after the receiver restarts, pair again.
 
 ## Sending files
 
 1. Pair with the receiver.
-2. Drag files or folders onto the window, use **Wybierz pliki** / **Wybierz folder** (Choose files / Choose folder), or paste a path.
+2. Drag files or folders onto the window, use **Choose files** / **Choose folder**, or paste a path.
 3. Choose the destination: the receiver's default folder (`Downloads\LAN Transfer`) or another existing folder on the receiver.
-4. Click **Wyślij** (Send). Each item shows progress, speed and time remaining and can be cancelled. A cancelled or interrupted transfer can be resumed; only the missing part is sent.
+4. Click **Send**. Each item shows progress, speed and time remaining and can be cancelled. A cancelled or interrupted transfer can be resumed; only the missing part is sent.
 
 ## Command line
 
@@ -88,13 +100,13 @@ The code can also be passed in `LANTRANSFER_CODE`. A receiver without a window c
 - On the first start the app asks once (UAC) to add two inbound rules: `LAN Transfer 2 Discovery (UDP)` and `LAN Transfer 2 Transfer (TCP)`.
 - The rules accept connections only from the local subnet (`remoteip=LocalSubnet`) and only on the Private and Domain network profiles (`profile=private,domain`). On a network that Windows marks as Public (café, hotel, airport) other computers cannot connect to LAN Transfer.
 - If the receiver is not visible on your home network, check that the network is set to Private in the Windows network settings.
-- Version 1 created rules named `LAN Transfer Discovery` and `LAN Transfer Transfer` for all profiles, Public included. If version 2 finds them, it shows a banner offering to replace them. Nothing is changed until you click **Zaktualizuj reguły** (Update rules) and confirm the Windows prompt.
+- Version 1 created rules named `LAN Transfer Discovery` and `LAN Transfer Transfer` for all profiles, Public included. If version 2 finds them, it shows a banner offering to replace them. Nothing is changed until you click **Update rules** and confirm the Windows prompt.
 
 ## Security notes
 
 - Discovery over UDP is not authenticated; it is only a hint. Trust comes from pairing: the code plus the pinned certificate fingerprint.
 - During the first pairing an active attacker on the same network (man in the middle) could pretend to be the receiver. Compare the certificate fingerprint on both screens before pairing.
-- A paired sender can browse the receiver's folders and save files into any existing folder there (the custom destination option). Pair only computers you trust, and use **Nowy kod** to revoke all pairings.
+- A paired sender can browse the receiver's folders and save files into any existing folder there (the custom destination option). Pair only computers you trust, and use **New code** to revoke all pairings.
 - The firewall rules do not open the ports on networks marked Public.
 
 ## Environment variables
@@ -106,6 +118,7 @@ These are meant for tests and automation; normal use needs none of them.
 | `LANTRANSFER_PORT`, `LANTRANSFER_UDP_PORT` | other ports |
 | `LANTRANSFER_RECEIVE_DIR`, `LANTRANSFER_DATA_DIR` | receive folder, program data folder |
 | `LANTRANSFER_NAME` | computer name shown to others |
+| `LANTRANSFER_LANG` | interface and CLI language (`en`, `de`, `pl`, …); overrides the saved choice |
 | `LANTRANSFER_LOOPBACK=1` | 127.0.0.1 only: no broadcasts, no LAN scan, no firewall rules |
 | `LANTRANSFER_PEER_UDP_PORTS` | UDP ports of other instances in loopback mode |
 | `LANTRANSFER_NO_FIREWALL=1` | do not create or check firewall rules |
@@ -118,11 +131,14 @@ Go 1.23 or newer on Windows 10/11.
 ```powershell
 build.bat
 go test ./...
+python tools/check_i18n.py
 ```
 
-`build.bat` runs the tests and builds `LANTransfer.exe` (window) and `LANTransferCLI.exe` (console) with the version from `VERSION` (default `2.0.0`). The tests include end-to-end transfers over 127.0.0.1: pairing and lockout, rejected unauthenticated requests, files from 0 B to 96 MB, Unicode folders and paths over 260 characters, name collisions, hostile names, a wrong checksum, cancel and resume, a full disk and certificate pinning.
+`build.bat` runs the tests and builds `LANTransfer.exe` (window) and `LANTransferCLI.exe` (console) with the version from `VERSION` (default `2.1.0`). The tests include end-to-end transfers over 127.0.0.1: pairing and lockout, rejected unauthenticated requests, files from 0 B to 96 MB, Unicode folders and paths over 260 characters, name collisions, hostile names, a wrong checksum, cancel and resume, a full disk and certificate pinning.
 
-Release notes: [docs/releases/v2.0.0.md](docs/releases/v2.0.0.md).
+The translations live in `locales/ui.<code>.json` (Polish is the source, English the fallback). `tools/check_i18n.py` checks that all 30 files have the same keys, placeholders and plural forms and contain no leftover Polish; a Go test checks that every key used by the program exists in every language.
+
+Release notes: [docs/releases/v2.1.0.md](docs/releases/v2.1.0.md) · [v2.0.0](docs/releases/v2.0.0.md).
 
 ## License
 

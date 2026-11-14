@@ -11,6 +11,7 @@ Un mic instrument portabil pentru trimiterea fișierelor și folderelor direct �
 ## Cuprins
 
 - [Funcționalități](#funcționalități)
+- [Limba interfeței](#limba-interfeței)
 - [Capturi de ecran](#capturi-de-ecran)
 - [Descărcare și pornire](#descărcare-și-pornire)
 - [Cum se face asocierea](#cum-se-face-asocierea)
@@ -34,8 +35,19 @@ Un mic instrument portabil pentru trimiterea fișierelor și folderelor direct �
 - Numele periculoase sunt respinse (`..`, căi absolute, fluxuri de date alternative `file:stream`, nume rezervate precum `CON`, `NUL`, `COM1`). Înainte de primire se verifică spațiul liber pe disc.
 - Glisare și plasare din Explorer, o coadă cu progres pentru fiecare fișier, viteză, timp rămas, anulare, reluare și un istoric al elementelor trimise și primite.
 - Portabil: un singur EXE, setările și istoricul într-un folder `data` aflat lângă el.
+- Fereastra, titlul ei și mesajele din linia de comandă în 30 de limbi (aceleași ca în acest README), alese automat după limba de afișare din Windows; aspect de la dreapta la stânga pentru arabă și ebraică.
 
-Interfața cu utilizatorul este momentan în limba poloneză.
+## Limba interfeței
+
+LAN Transfer vorbește aceleași 30 de limbi ca acest README. La prima pornire folosește limba de afișare din Windows (prima limbă acceptată din lista de limbi Windows); dacă Windows folosește o limbă care nu se află pe listă, interfața este în engleză.
+
+Pentru a o schimba, faceți clic pe butonul cu roată dințată (**Setări**) din colțul din dreapta sus și alegeți o limbă. Fereastra, titlul ei și toate mesajele se schimbă imediat, iar alegerea se salvează în `data\settings.json`. **Automat (Windows)** revine la limba de afișare din Windows. Numerele, dimensiunile, vitezele, datele și formele de plural respectă regulile limbii alese; araba și ebraica folosesc un aspect în oglindă, de la dreapta la stânga, în timp ce căile, adresele IP, codurile și amprentele rămân de la stânga la dreapta. Mesajele de la celălalt calculator (de exemplu „spațiu insuficient pe discul destinatarului”) sunt afișate în limba dvs., nu în cea a destinatarului.
+
+`LANTransferCLI.exe` folosește aceeași limbă. `LANTRANSFER_LANG` (de exemplu `LANTRANSFER_LANG=de`) are prioritate față de alegerea salvată, atât în fereastră, cât și în linia de comandă.
+
+| English | Deutsch | العربية (RTL) |
+|---|---|---|
+| ![LAN Transfer în engleză](../docs/screenshots/lang-en.png) | ![LAN Transfer în germană](../docs/screenshots/lang-de.png) | ![LAN Transfer în arabă, aspect de la dreapta la stânga](../docs/screenshots/lang-ar.png) |
 
 ## Capturi de ecran
 
@@ -47,7 +59,7 @@ Interfața cu utilizatorul este momentan în limba poloneză.
 
 ## Descărcare și pornire
 
-1. Descărcați `LANTransfer-2.0.0-windows-amd64.zip` din [Releases](https://github.com/snakex21/LAN-Transfer/releases/latest) și verificați-l cu fișierul `.sha256` publicat.
+1. Descărcați `LANTransfer-2.1.0-windows-amd64.zip` din [Releases](https://github.com/snakex21/LAN-Transfer/releases/latest) și verificați-l cu fișierul `.sha256` publicat.
 2. Extrageți-l în orice folder pe ambele calculatoare.
 3. Porniți `LANTransfer.exe`. La prima pornire Windows cere (UAC) permisiunea de a adăuga două reguli de firewall; vedeți [Porturi și firewall](#porturi-și-firewall).
 
@@ -56,18 +68,18 @@ Cerințe: Windows 10 sau 11 (64 de biți) cu runtime-ul WebView2, care face part
 ## Cum se face asocierea
 
 1. Porniți LAN Transfer pe ambele calculatoare. Destinatarul își afișează codul de asociere și amprenta certificatului în colțul din dreapta sus.
-2. Pe calculatorul expeditor, faceți clic pe destinatar în lista **Odbiorca** (Destinatar). Dacă nu apare, folosiți **Połącz ręcznie** (Conectare manuală) și introduceți adresa lui IP.
+2. Pe calculatorul expeditor, faceți clic pe destinatar în lista **Destinatar**. Dacă nu apare, folosiți **Conectare manuală (adresă IP)** și introduceți adresa lui IP.
 3. Tastați codul de 6 cifre de pe ecranul destinatarului și comparați amprenta certificatului afișată în dialog cu cea de pe destinatar. Dacă diferă, nu continuați.
-4. Faceți clic pe **Sparuj** (Asociază). Dispozitivul afișează acum **sparowano** (asociat).
+4. Faceți clic pe **Asociere**. Dispozitivul afișează acum **✓ asociat**.
 
-După 5 coduri greșite de la un calculator, destinatarul blochează încercările ulterioare de la acesta. **Nowy kod** (Cod nou) creează un cod nou și anulează toate asocierile existente. Destinatarul creează un cod și un certificat noi la fiecare pornire, așa că după repornirea destinatarului trebuie să faceți din nou asocierea.
+După 5 coduri greșite de la un calculator, destinatarul blochează încercările ulterioare de la acesta. **Cod nou** creează un cod nou și anulează toate asocierile existente. Destinatarul creează un cod și un certificat noi la fiecare pornire, așa că după repornirea destinatarului trebuie să faceți din nou asocierea.
 
 ## Trimiterea fișierelor
 
 1. Asociați-vă cu destinatarul.
-2. Trageți fișiere sau foldere în fereastră, folosiți **Wybierz pliki** / **Wybierz folder** (Alege fișiere / Alege folder) sau lipiți o cale.
+2. Trageți fișiere sau foldere în fereastră, folosiți **Alegeți fișiere** / **Alegeți un folder** sau lipiți o cale.
 3. Alegeți destinația: folderul implicit al destinatarului (`Downloads\LAN Transfer`) sau un alt folder existent pe destinatar.
-4. Faceți clic pe **Wyślij** (Trimite). Fiecare element afișează progresul, viteza și timpul rămas și poate fi anulat. Un transfer anulat sau întrerupt poate fi reluat; se trimite doar partea lipsă.
+4. Faceți clic pe **Trimitere**. Fiecare element afișează progresul, viteza și timpul rămas și poate fi anulat. Un transfer anulat sau întrerupt poate fi reluat; se trimite doar partea lipsă.
 
 ## Linia de comandă
 
@@ -88,13 +100,13 @@ Codul poate fi transmis și prin `LANTRANSFER_CODE`. Un destinatar fără fereas
 - La prima pornire aplicația cere o singură dată (UAC) adăugarea a două reguli de intrare: `LAN Transfer 2 Discovery (UDP)` și `LAN Transfer 2 Transfer (TCP)`.
 - Regulile acceptă conexiuni doar din subrețeaua locală (`remoteip=LocalSubnet`) și doar pe profilurile de rețea Privată și Domeniu (`profile=private,domain`). Într-o rețea pe care Windows o marchează ca Publică (cafenea, hotel, aeroport), alte calculatoare nu se pot conecta la LAN Transfer.
 - Dacă destinatarul nu este vizibil în rețeaua de acasă, verificați ca rețeaua să fie setată ca Privată în setările de rețea Windows.
-- Versiunea 1 a creat reguli numite `LAN Transfer Discovery` și `LAN Transfer Transfer` pentru toate profilurile, inclusiv Publică. Dacă versiunea 2 le găsește, afișează un banner care oferă înlocuirea lor. Nu se modifică nimic până când nu faceți clic pe **Zaktualizuj reguły** (Actualizează regulile) și nu confirmați solicitarea Windows.
+- Versiunea 1 a creat reguli numite `LAN Transfer Discovery` și `LAN Transfer Transfer` pentru toate profilurile, inclusiv Publică. Dacă versiunea 2 le găsește, afișează un banner care oferă înlocuirea lor. Nu se modifică nimic până când nu faceți clic pe **Actualizare reguli** și nu confirmați solicitarea Windows.
 
 ## Note de securitate
 
 - Descoperirea prin UDP nu este autentificată; este doar un indiciu. Încrederea provine din asociere: codul plus amprenta fixată a certificatului.
 - În timpul primei asocieri, un atacator activ din aceeași rețea (man in the middle) s-ar putea da drept destinatar. Comparați amprenta certificatului pe ambele ecrane înainte de asociere.
-- Un expeditor asociat poate răsfoi folderele destinatarului și poate salva fișiere în orice folder existent de acolo (opțiunea de destinație personalizată). Asociați doar calculatoare în care aveți încredere și folosiți **Nowy kod** pentru a revoca toate asocierile.
+- Un expeditor asociat poate răsfoi folderele destinatarului și poate salva fișiere în orice folder existent de acolo (opțiunea de destinație personalizată). Asociați doar calculatoare în care aveți încredere și folosiți **Cod nou** pentru a revoca toate asocierile.
 - Regulile de firewall nu deschid porturile în rețelele marcate ca Publice.
 
 ## Variabile de mediu
@@ -106,6 +118,7 @@ Acestea sunt destinate testelor și automatizării; utilizarea normală nu neces
 | `LANTRANSFER_PORT`, `LANTRANSFER_UDP_PORT` | alte porturi |
 | `LANTRANSFER_RECEIVE_DIR`, `LANTRANSFER_DATA_DIR` | folderul de primire, folderul de date al programului |
 | `LANTRANSFER_NAME` | numele calculatorului afișat celorlalți |
+| `LANTRANSFER_LANG` | limba interfeței și a liniei de comandă (`en`, `de`, `pl`, …); are prioritate față de alegerea salvată |
 | `LANTRANSFER_LOOPBACK=1` | doar 127.0.0.1: fără broadcast, fără scanarea LAN, fără reguli de firewall |
 | `LANTRANSFER_PEER_UDP_PORTS` | porturile UDP ale altor instanțe în modul loopback |
 | `LANTRANSFER_NO_FIREWALL=1` | nu creează și nu verifică reguli de firewall |
@@ -118,11 +131,14 @@ Go 1.23 sau mai nou pe Windows 10/11.
 ```powershell
 build.bat
 go test ./...
+python tools/check_i18n.py
 ```
 
-`build.bat` rulează testele și compilează `LANTransfer.exe` (cu fereastră) și `LANTransferCLI.exe` (consolă) cu versiunea din `VERSION` (implicit `2.0.0`). Testele includ transferuri end-to-end prin 127.0.0.1: asociere și blocare, cereri neautentificate respinse, fișiere de la 0 B la 96 MB, foldere Unicode și căi de peste 260 de caractere, coliziuni de nume, nume ostile, o sumă de control greșită, anulare și reluare, disc plin și fixarea certificatului.
+`build.bat` rulează testele și compilează `LANTransfer.exe` (cu fereastră) și `LANTransferCLI.exe` (consolă) cu versiunea din `VERSION` (implicit `2.1.0`). Testele includ transferuri end-to-end prin 127.0.0.1: asociere și blocare, cereri neautentificate respinse, fișiere de la 0 B la 96 MB, foldere Unicode și căi de peste 260 de caractere, coliziuni de nume, nume ostile, o sumă de control greșită, anulare și reluare, disc plin și fixarea certificatului.
 
-Note de versiune: [docs/releases/v2.0.0.md](../docs/releases/v2.0.0.md).
+Traducerile se află în `locales/ui.<code>.json` (poloneza este limba sursă, engleza limba de rezervă). `tools/check_i18n.py` verifică dacă toate cele 30 de fișiere au aceleași chei, substituenți și forme de plural și dacă nu conțin resturi de text în poloneză; un test Go verifică dacă fiecare cheie folosită de program există în fiecare limbă.
+
+Note de versiune: [docs/releases/v2.1.0.md](../docs/releases/v2.1.0.md) · [v2.0.0](../docs/releases/v2.0.0.md).
 
 ## Licență
 

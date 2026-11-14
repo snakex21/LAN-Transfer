@@ -11,6 +11,7 @@ Et lille, portabelt værktøj til at sende filer og mapper direkte mellem to com
 ## Indhold
 
 - [Funktioner](#funktioner)
+- [Sprog i brugergrænsefladen](#sprog-i-brugergrænsefladen)
 - [Skærmbilleder](#skærmbilleder)
 - [Download og kør](#download-og-kør)
 - [Sådan parrer du](#sådan-parrer-du)
@@ -34,8 +35,19 @@ Et lille, portabelt værktøj til at sende filer og mapper direkte mellem to com
 - Farlige navne afvises (`..`, absolutte stier, alternative datastrømme `file:stream`, reserverede navne som `CON`, `NUL`, `COM1`). Ledig diskplads kontrolleres før modtagelse.
 - Træk og slip fra Stifinder, en kø med status for hver fil, hastighed, resterende tid, annuller, genoptag og en historik over sendte og modtagne elementer.
 - Portabelt: én enkelt EXE-fil, med indstillinger og historik i en mappe `data` ved siden af.
+- Vinduet, dets titel og kommandolinjens output på 30 sprog (de samme som denne README), valgt automatisk ud fra visningssproget i Windows; layout fra højre mod venstre for arabisk og hebraisk.
 
-Brugergrænsefladen er i øjeblikket på polsk.
+## Sprog i brugergrænsefladen
+
+LAN Transfer taler de samme 30 sprog som denne README. Ved første start bruges visningssproget i Windows (det første understøttede sprog på sproglisten i Windows); hvis Windows bruger et sprog, der ikke er på listen, er brugergrænsefladen på engelsk.
+
+Du ændrer sproget ved at klikke på tandhjulsknappen (**Indstillinger**) i øverste højre hjørne og vælge et sprog. Vinduet, titlen og alle meddelelser skifter med det samme, og valget gemmes i `data\settings.json`. **Automatisk (Windows)** følger igen visningssproget i Windows. Tal, størrelser, hastigheder, datoer og flertalsformer følger reglerne for det valgte sprog; arabisk og hebraisk bruger et spejlvendt layout fra højre mod venstre, mens stier, IP-adresser, koder og fingeraftryk forbliver fra venstre mod højre. Meddelelser fra den anden computer (f.eks. »ikke nok plads på modtagerens disk«) vises på dit sprog, ikke på modtagerens.
+
+`LANTransferCLI.exe` bruger det samme sprog. `LANTRANSFER_LANG` (f.eks. `LANTRANSFER_LANG=de`) har forrang for det gemte valg i både vinduet og kommandolinjen.
+
+| English | Deutsch | العربية (RTL) |
+|---|---|---|
+| ![LAN Transfer på engelsk](../docs/screenshots/lang-en.png) | ![LAN Transfer på tysk](../docs/screenshots/lang-de.png) | ![LAN Transfer på arabisk, layout fra højre mod venstre](../docs/screenshots/lang-ar.png) |
 
 ## Skærmbilleder
 
@@ -47,7 +59,7 @@ Brugergrænsefladen er i øjeblikket på polsk.
 
 ## Download og kør
 
-1. Download `LANTransfer-2.0.0-windows-amd64.zip` fra [Releases](https://github.com/snakex21/LAN-Transfer/releases/latest), og kontrollér den mod den offentliggjorte `.sha256`-fil.
+1. Download `LANTransfer-2.1.0-windows-amd64.zip` fra [Releases](https://github.com/snakex21/LAN-Transfer/releases/latest), og kontrollér den mod den offentliggjorte `.sha256`-fil.
 2. Udpak den til en vilkårlig mappe på begge computere.
 3. Start `LANTransfer.exe`. Ved første start beder Windows (UAC) om tilladelse til at tilføje to firewallregler; se [Porte og firewall](#porte-og-firewall).
 
@@ -56,18 +68,18 @@ Krav: Windows 10 eller 11 (64-bit) med WebView2-runtime, som er en del af aktuel
 ## Sådan parrer du
 
 1. Start LAN Transfer på begge computere. Modtageren viser sin parringskode og sit certifikatfingeraftryk i øverste højre hjørne.
-2. Klik på modtageren i listen **Odbiorca** (Modtager) på den afsendende computer. Hvis den ikke vises, skal du bruge **Połącz ręcznie** (Forbind manuelt) og indtaste dens IP-adresse.
+2. Klik på modtageren i listen **Modtager** på den afsendende computer. Hvis den ikke vises, skal du bruge **Opret forbindelse manuelt (IP-adresse)** og indtaste dens IP-adresse.
 3. Indtast den 6-cifrede kode fra modtagerens skærm, og sammenlign certifikatets fingeraftryk i dialogboksen med det, der vises på modtageren. Hvis de er forskellige, må du ikke fortsætte.
-4. Klik på **Sparuj** (Par). Enheden viser nu **sparowano** (parret).
+4. Klik på **Par**. Enheden viser nu **✓ parret**.
 
-Efter 5 forkerte koder fra én computer blokerer modtageren yderligere forsøg fra den. **Nowy kod** (Ny kode) opretter en ny kode og annullerer alle eksisterende parringer. Modtageren opretter en ny kode og et nyt certifikat, hver gang den starter, så du skal parre igen, når modtageren er blevet genstartet.
+Efter 5 forkerte koder fra én computer blokerer modtageren yderligere forsøg fra den. **Ny kode** opretter en ny kode og annullerer alle eksisterende parringer. Modtageren opretter en ny kode og et nyt certifikat, hver gang den starter, så du skal parre igen, når modtageren er blevet genstartet.
 
 ## Send filer
 
 1. Par med modtageren.
-2. Træk filer eller mapper ind i vinduet, brug **Wybierz pliki** / **Wybierz folder** (Vælg filer / Vælg mappe), eller indsæt en sti.
+2. Træk filer eller mapper ind i vinduet, brug **Vælg filer** / **Vælg mappe**, eller indsæt en sti.
 3. Vælg destination: modtagerens standardmappe (`Downloads\LAN Transfer`) eller en anden eksisterende mappe på modtageren.
-4. Klik på **Wyślij** (Send). Hvert element viser status, hastighed og resterende tid og kan annulleres. En annulleret eller afbrudt overførsel kan genoptages; kun den manglende del sendes.
+4. Klik på **Send**. Hvert element viser status, hastighed og resterende tid og kan annulleres. En annulleret eller afbrudt overførsel kan genoptages; kun den manglende del sendes.
 
 ## Kommandolinje
 
@@ -88,13 +100,13 @@ Koden kan også angives i `LANTRANSFER_CODE`. En modtager uden vindue kan bruge 
 - Ved første start beder appen én gang (UAC) om at tilføje to indgående regler: `LAN Transfer 2 Discovery (UDP)` og `LAN Transfer 2 Transfer (TCP)`.
 - Reglerne accepterer kun forbindelser fra det lokale undernet (`remoteip=LocalSubnet`) og kun på netværksprofilerne Privat og Domæne (`profile=private,domain`). På et netværk, som Windows markerer som Offentligt (café, hotel, lufthavn), kan andre computere ikke oprette forbindelse til LAN Transfer.
 - Hvis modtageren ikke er synlig på dit hjemmenetværk, skal du kontrollere, at netværket er indstillet til Privat i netværksindstillingerne i Windows.
-- Version 1 oprettede regler med navnene `LAN Transfer Discovery` og `LAN Transfer Transfer` for alle profiler, inklusive Offentligt. Hvis version 2 finder dem, vises et banner, der tilbyder at erstatte dem. Intet ændres, før du klikker på **Zaktualizuj reguły** (Opdater regler) og bekræfter Windows-prompten.
+- Version 1 oprettede regler med navnene `LAN Transfer Discovery` og `LAN Transfer Transfer` for alle profiler, inklusive Offentligt. Hvis version 2 finder dem, vises et banner, der tilbyder at erstatte dem. Intet ændres, før du klikker på **Opdater regler** og bekræfter Windows-prompten.
 
 ## Sikkerhedsbemærkninger
 
 - Registrering via UDP er ikke godkendt; den er kun et fingerpeg. Tillid kommer fra parringen: koden plus det fastlåste certifikatfingeraftryk.
 - Under den første parring kan en aktiv angriber på det samme netværk (man-in-the-middle) udgive sig for at være modtageren. Sammenlign certifikatets fingeraftryk på begge skærme, før du parrer.
-- En parret afsender kan gennemse modtagerens mapper og gemme filer i en hvilken som helst eksisterende mappe dér (indstillingen for brugerdefineret destination). Par kun computere, du har tillid til, og brug **Nowy kod** til at tilbagekalde alle parringer.
+- En parret afsender kan gennemse modtagerens mapper og gemme filer i en hvilken som helst eksisterende mappe dér (indstillingen for brugerdefineret destination). Par kun computere, du har tillid til, og brug **Ny kode** til at tilbagekalde alle parringer.
 - Firewallreglerne åbner ikke portene på netværk, der er markeret som Offentlige.
 
 ## Miljøvariabler
@@ -106,6 +118,7 @@ Disse er beregnet til test og automatisering; normal brug kræver ingen af dem.
 | `LANTRANSFER_PORT`, `LANTRANSFER_UDP_PORT` | andre porte |
 | `LANTRANSFER_RECEIVE_DIR`, `LANTRANSFER_DATA_DIR` | modtagelsesmappe, mappe til programdata |
 | `LANTRANSFER_NAME` | computernavn, der vises for andre |
+| `LANTRANSFER_LANG` | sprog for brugergrænseflade og kommandolinje (`en`, `de`, `pl`, …); har forrang for det gemte valg |
 | `LANTRANSFER_LOOPBACK=1` | kun 127.0.0.1: ingen broadcasts, ingen LAN-scanning, ingen firewallregler |
 | `LANTRANSFER_PEER_UDP_PORTS` | UDP-porte for andre instanser i loopback-tilstand |
 | `LANTRANSFER_NO_FIREWALL=1` | opret eller kontrollér ikke firewallregler |
@@ -118,11 +131,14 @@ Go 1.23 eller nyere på Windows 10/11.
 ```powershell
 build.bat
 go test ./...
+python tools/check_i18n.py
 ```
 
-`build.bat` kører testene og bygger `LANTransfer.exe` (vindue) og `LANTransferCLI.exe` (konsol) med versionen fra `VERSION` (standard `2.0.0`). Testene omfatter end-to-end-overførsler over 127.0.0.1: parring og spærring, afviste ikke-godkendte anmodninger, filer fra 0 B til 96 MB, Unicode-mapper og stier over 260 tegn, navnekonflikter, ondsindede navne, en forkert kontrolsum, annullering og genoptagelse, en fuld disk og certifikatfastlåsning.
+`build.bat` kører testene og bygger `LANTransfer.exe` (vindue) og `LANTransferCLI.exe` (konsol) med versionen fra `VERSION` (standard `2.1.0`). Testene omfatter end-to-end-overførsler over 127.0.0.1: parring og spærring, afviste ikke-godkendte anmodninger, filer fra 0 B til 96 MB, Unicode-mapper og stier over 260 tegn, navnekonflikter, ondsindede navne, en forkert kontrolsum, annullering og genoptagelse, en fuld disk og certifikatfastlåsning.
 
-Udgivelsesnoter: [docs/releases/v2.0.0.md](../docs/releases/v2.0.0.md).
+Oversættelserne ligger i `locales/ui.<code>.json` (polsk er kildesproget, engelsk reservesproget). `tools/check_i18n.py` kontrollerer, at alle 30 filer har de samme nøgler, pladsholdere og flertalsformer og ikke indeholder rester af polsk; en Go-test kontrollerer, at alle nøgler, som programmet bruger, findes på alle sprog.
+
+Udgivelsesnoter: [docs/releases/v2.1.0.md](../docs/releases/v2.1.0.md) · [v2.0.0](../docs/releases/v2.0.0.md).
 
 ## Licens
 

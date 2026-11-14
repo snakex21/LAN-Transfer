@@ -11,6 +11,7 @@ Małe, przenośne narzędzie do przesyłania plików i folderów bezpośrednio m
 ## Spis treści
 
 - [Funkcje](#funkcje)
+- [Język interfejsu](#język-interfejsu)
 - [Zrzuty ekranu](#zrzuty-ekranu)
 - [Pobieranie i uruchomienie](#pobieranie-i-uruchomienie)
 - [Jak sparować](#jak-sparować)
@@ -34,8 +35,19 @@ Małe, przenośne narzędzie do przesyłania plików i folderów bezpośrednio m
 - Niebezpieczne nazwy są odrzucane (`..`, ścieżki bezwzględne, alternatywne strumienie danych `file:stream`, nazwy zarezerwowane, takie jak `CON`, `NUL`, `COM1`). Przed odbiorem sprawdzane jest wolne miejsce na dysku.
 - Przeciąganie i upuszczanie z Eksploratora plików, kolejka z postępem każdego pliku, prędkością, pozostałym czasem, anulowaniem i wznawianiem oraz historia wysłanych i odebranych elementów.
 - Wersja przenośna: jeden plik EXE, ustawienia i historia w folderze `data` obok niego.
+- Okno, jego tytuł i komunikaty wiersza poleceń w 30 językach (tych samych co to README), wybieranych automatycznie według języka wyświetlania Windows; układ od prawej do lewej dla arabskiego i hebrajskiego.
 
-Interfejs użytkownika jest w języku polskim.
+## Język interfejsu
+
+LAN Transfer mówi w tych samych 30 językach co to README. Przy pierwszym uruchomieniu używa języka wyświetlania Windows (pierwszego obsługiwanego języka z listy języków Windows); jeśli Windows używa języka spoza listy, interfejs jest po angielsku.
+
+Aby go zmienić, kliknij przycisk z kołem zębatym (**Ustawienia**) w prawym górnym rogu i wybierz język. Okno, jego tytuł i wszystkie komunikaty zmieniają się od razu, a wybór jest zapisywany w `data\settings.json`. **Automatycznie (Windows)** ponownie dopasowuje język do Windows. Liczby, rozmiary, prędkości, daty i formy liczby mnogiej są zgodne z regułami wybranego języka; arabski i hebrajski mają lustrzany układ od prawej do lewej, a ścieżki, adresy IP, kody i odciski certyfikatów pozostają zapisane od lewej do prawej. Komunikaty z drugiego komputera (na przykład „za mało miejsca na dysku odbiorcy”) są wyświetlane w Twoim języku, a nie w języku odbiorcy.
+
+`LANTransferCLI.exe` używa tego samego języka. Zmienna `LANTRANSFER_LANG` (na przykład `LANTRANSFER_LANG=de`) ma pierwszeństwo przed zapisanym wyborem zarówno w oknie, jak i w wierszu poleceń.
+
+| English | Deutsch | العربية (RTL) |
+|---|---|---|
+| ![LAN Transfer po angielsku](../docs/screenshots/lang-en.png) | ![LAN Transfer po niemiecku](../docs/screenshots/lang-de.png) | ![LAN Transfer po arabsku, układ od prawej do lewej](../docs/screenshots/lang-ar.png) |
 
 ## Zrzuty ekranu
 
@@ -47,7 +59,7 @@ Interfejs użytkownika jest w języku polskim.
 
 ## Pobieranie i uruchomienie
 
-1. Pobierz `LANTransfer-2.0.0-windows-amd64.zip` z [Releases](https://github.com/snakex21/LAN-Transfer/releases/latest) i sprawdź go z opublikowanym plikiem `.sha256`.
+1. Pobierz `LANTransfer-2.1.0-windows-amd64.zip` z [Releases](https://github.com/snakex21/LAN-Transfer/releases/latest) i sprawdź go z opublikowanym plikiem `.sha256`.
 2. Rozpakuj archiwum do dowolnego folderu na obu komputerach.
 3. Uruchom `LANTransfer.exe`. Przy pierwszym uruchomieniu Windows prosi (UAC) o zgodę na dodanie dwóch reguł zapory; zobacz [Porty i zapora](#porty-i-zapora).
 
@@ -56,9 +68,9 @@ Wymagania: Windows 10 lub 11 (64-bitowy) ze środowiskiem uruchomieniowym WebVie
 ## Jak sparować
 
 1. Uruchom LAN Transfer na obu komputerach. Odbiorca pokazuje swój kod parowania i odcisk certyfikatu w prawym górnym rogu.
-2. Na komputerze wysyłającym kliknij odbiorcę na liście **Odbiorca**. Jeśli go tam nie ma, użyj **Połącz ręcznie** i wpisz jego adres IP.
+2. Na komputerze wysyłającym kliknij odbiorcę na liście **Odbiorca**. Jeśli go tam nie ma, użyj **Połącz ręcznie (adres IP)** i wpisz jego adres IP.
 3. Wpisz 6-cyfrowy kod z ekranu odbiorcy i porównaj odcisk certyfikatu pokazany w oknie dialogowym z odciskiem na odbiorcy. Jeśli się różnią, nie kontynuuj.
-4. Kliknij **Sparuj**. Urządzenie ma teraz status **sparowano**.
+4. Kliknij **Sparuj**. Urządzenie ma teraz status **✓ sparowano**.
 
 Po 5 błędnych kodach z jednego komputera odbiorca blokuje kolejne próby z tego komputera. **Nowy kod** tworzy nowy kod i anuluje wszystkie istniejące parowania. Odbiorca tworzy nowy kod i certyfikat przy każdym uruchomieniu, więc po ponownym uruchomieniu odbiorcy trzeba sparować urządzenia od nowa.
 
@@ -106,6 +118,7 @@ Są przeznaczone do testów i automatyzacji; przy normalnym użytkowaniu żadna 
 | `LANTRANSFER_PORT`, `LANTRANSFER_UDP_PORT` | inne porty |
 | `LANTRANSFER_RECEIVE_DIR`, `LANTRANSFER_DATA_DIR` | folder odbioru, folder danych programu |
 | `LANTRANSFER_NAME` | nazwa komputera widoczna dla innych |
+| `LANTRANSFER_LANG` | język interfejsu i wiersza poleceń (`en`, `de`, `pl`, …); ma pierwszeństwo przed zapisanym wyborem |
 | `LANTRANSFER_LOOPBACK=1` | tylko 127.0.0.1: bez rozgłoszeń, bez skanowania LAN, bez reguł zapory |
 | `LANTRANSFER_PEER_UDP_PORTS` | porty UDP innych instancji w trybie loopback |
 | `LANTRANSFER_NO_FIREWALL=1` | nie twórz ani nie sprawdzaj reguł zapory |
@@ -118,11 +131,14 @@ Go 1.23 lub nowszy w systemie Windows 10/11.
 ```powershell
 build.bat
 go test ./...
+python tools/check_i18n.py
 ```
 
-`build.bat` uruchamia testy i buduje `LANTransfer.exe` (wersja z oknem) oraz `LANTransferCLI.exe` (wersja konsolowa) z numerem wersji z pliku `VERSION` (domyślnie `2.0.0`). Testy obejmują pełne transfery przez 127.0.0.1: parowanie i blokadę, odrzucanie nieuwierzytelnionych żądań, pliki od 0 B do 96 MB, foldery z nazwami Unicode i ścieżki dłuższe niż 260 znaków, kolizje nazw, złośliwe nazwy, błędną sumę kontrolną, anulowanie i wznawianie, zapełniony dysk oraz przypinanie certyfikatu.
+`build.bat` uruchamia testy i buduje `LANTransfer.exe` (wersja z oknem) oraz `LANTransferCLI.exe` (wersja konsolowa) z numerem wersji z pliku `VERSION` (domyślnie `2.1.0`). Testy obejmują pełne transfery przez 127.0.0.1: parowanie i blokadę, odrzucanie nieuwierzytelnionych żądań, pliki od 0 B do 96 MB, foldery z nazwami Unicode i ścieżki dłuższe niż 260 znaków, kolizje nazw, złośliwe nazwy, błędną sumę kontrolną, anulowanie i wznawianie, zapełniony dysk oraz przypinanie certyfikatu.
 
-Informacje o wydaniu: [docs/releases/v2.0.0.md](../docs/releases/v2.0.0.md).
+Tłumaczenia znajdują się w plikach `locales/ui.<code>.json` (polski jest językiem źródłowym, angielski zapasowym). `tools/check_i18n.py` sprawdza, czy wszystkie 30 plików ma te same klucze, placeholdery i formy liczby mnogiej oraz nie zawiera pozostałości polskiego tekstu; test Go sprawdza, czy każdy klucz używany przez program istnieje w każdym języku.
+
+Informacje o wydaniu: [docs/releases/v2.1.0.md](../docs/releases/v2.1.0.md) · [v2.0.0](../docs/releases/v2.0.0.md).
 
 ## Licencja
 

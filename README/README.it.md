@@ -11,6 +11,7 @@ Un piccolo strumento portatile per inviare file e cartelle direttamente tra due 
 ## Indice
 
 - [Funzionalità](#funzionalità)
+- [Lingua dell'interfaccia](#lingua-dellinterfaccia)
 - [Screenshot](#screenshot)
 - [Download e avvio](#download-e-avvio)
 - [Abbinamento](#abbinamento)
@@ -34,8 +35,19 @@ Un piccolo strumento portatile per inviare file e cartelle direttamente tra due 
 - I nomi pericolosi vengono rifiutati (`..`, percorsi assoluti, flussi di dati alternativi `file:stream`, nomi riservati come `CON`, `NUL`, `COM1`). Prima della ricezione viene controllato lo spazio libero su disco.
 - Trascinamento da Esplora file, una coda con avanzamento per singolo file, velocità, tempo rimanente, annullamento, ripresa e una cronologia degli elementi inviati e ricevuti.
 - Portatile: un unico EXE, con impostazioni e cronologia in una cartella `data` accanto a esso.
+- La finestra, il suo titolo e i messaggi della riga di comando in 30 lingue (le stesse di questo README), scelte automaticamente in base alla lingua di visualizzazione di Windows; layout da destra a sinistra per arabo ed ebraico.
 
-L'interfaccia utente è attualmente in polacco.
+## Lingua dell'interfaccia
+
+LAN Transfer parla le stesse 30 lingue di questo README. Al primo avvio usa la lingua di visualizzazione di Windows (la prima lingua supportata nell'elenco delle lingue di Windows); se Windows usa una lingua non presente nell'elenco, l'interfaccia è in inglese.
+
+Per cambiarla, fai clic sul pulsante con l'ingranaggio (**Impostazioni**) nell'angolo in alto a destra e scegli una lingua. La finestra, il suo titolo e tutti i messaggi cambiano subito e la scelta viene salvata in `data\settings.json`. **Automatica (Windows)** torna a seguire la lingua di visualizzazione di Windows. Numeri, dimensioni, velocità, date e forme plurali seguono le regole della lingua scelta; arabo ed ebraico usano un layout speculare da destra a sinistra, mentre percorsi, indirizzi IP, codici e impronte digitali restano scritti da sinistra a destra. I messaggi provenienti dall'altro computer (ad esempio “spazio insufficiente sul disco del destinatario”) vengono mostrati nella tua lingua, non in quella del destinatario.
+
+`LANTransferCLI.exe` usa la stessa lingua. `LANTRANSFER_LANG` (ad esempio `LANTRANSFER_LANG=de`) ha la precedenza sulla scelta salvata, sia per la finestra sia per la riga di comando.
+
+| English | Deutsch | العربية (RTL) |
+|---|---|---|
+| ![LAN Transfer in inglese](../docs/screenshots/lang-en.png) | ![LAN Transfer in tedesco](../docs/screenshots/lang-de.png) | ![LAN Transfer in arabo, layout da destra a sinistra](../docs/screenshots/lang-ar.png) |
 
 ## Screenshot
 
@@ -47,7 +59,7 @@ L'interfaccia utente è attualmente in polacco.
 
 ## Download e avvio
 
-1. Scarica `LANTransfer-2.0.0-windows-amd64.zip` da [Releases](https://github.com/snakex21/LAN-Transfer/releases/latest) e verificalo con il file `.sha256` pubblicato.
+1. Scarica `LANTransfer-2.1.0-windows-amd64.zip` da [Releases](https://github.com/snakex21/LAN-Transfer/releases/latest) e verificalo con il file `.sha256` pubblicato.
 2. Estrailo in una cartella qualsiasi su entrambi i computer.
 3. Avvia `LANTransfer.exe`. Al primo avvio Windows chiede (UAC) l'autorizzazione ad aggiungere due regole del firewall; vedi [Porte e firewall](#porte-e-firewall).
 
@@ -56,18 +68,18 @@ Requisiti: Windows 10 o 11 (64 bit) con il runtime WebView2, incluso nelle versi
 ## Abbinamento
 
 1. Avvia LAN Transfer su entrambi i computer. Il destinatario mostra nell'angolo in alto a destra il proprio codice di abbinamento e l'impronta del certificato.
-2. Sul computer mittente, fai clic sul destinatario nell'elenco **Odbiorca** (Destinatario). Se non compare, usa **Połącz ręcznie** (Connetti manualmente) e inserisci il suo indirizzo IP.
+2. Sul computer mittente, fai clic sul destinatario nell'elenco **Destinatario**. Se non compare, usa **Connetti manualmente (indirizzo IP)** e inserisci il suo indirizzo IP.
 3. Digita il codice di 6 cifre mostrato sullo schermo del destinatario e confronta l'impronta del certificato visualizzata nella finestra di dialogo con quella sul destinatario. Se sono diverse, non proseguire.
-4. Fai clic su **Sparuj** (Associa). Il dispositivo ora risulta **sparowano** (associato).
+4. Fai clic su **Associa**. Il dispositivo ora risulta **✓ associato**.
 
-Dopo 5 codici errati da uno stesso computer, il destinatario blocca gli ulteriori tentativi provenienti da esso. **Nowy kod** (Nuovo codice) crea un nuovo codice e annulla tutti gli abbinamenti esistenti. Il destinatario crea un nuovo codice e un nuovo certificato a ogni avvio, quindi dopo il riavvio del destinatario occorre ripetere l'abbinamento.
+Dopo 5 codici errati da uno stesso computer, il destinatario blocca gli ulteriori tentativi provenienti da esso. **Nuovo codice** crea un nuovo codice e annulla tutti gli abbinamenti esistenti. Il destinatario crea un nuovo codice e un nuovo certificato a ogni avvio, quindi dopo il riavvio del destinatario occorre ripetere l'abbinamento.
 
 ## Invio di file
 
 1. Esegui l'abbinamento con il destinatario.
-2. Trascina file o cartelle sulla finestra, usa **Wybierz pliki** / **Wybierz folder** (Scegli file / Scegli cartella) oppure incolla un percorso.
+2. Trascina file o cartelle sulla finestra, usa **Scegli file** / **Scegli cartella** oppure incolla un percorso.
 3. Scegli la destinazione: la cartella predefinita del destinatario (`Downloads\LAN Transfer`) o un'altra cartella esistente sul destinatario.
-4. Fai clic su **Wyślij** (Invia). Ogni elemento mostra avanzamento, velocità e tempo rimanente e può essere annullato. Un trasferimento annullato o interrotto può essere ripreso; viene inviata solo la parte mancante.
+4. Fai clic su **Invia**. Ogni elemento mostra avanzamento, velocità e tempo rimanente e può essere annullato. Un trasferimento annullato o interrotto può essere ripreso; viene inviata solo la parte mancante.
 
 ## Riga di comando
 
@@ -88,13 +100,13 @@ Il codice può anche essere passato in `LANTRANSFER_CODE`. Un destinatario senza
 - Al primo avvio l'app chiede una sola volta (UAC) di aggiungere due regole in ingresso: `LAN Transfer 2 Discovery (UDP)` e `LAN Transfer 2 Transfer (TCP)`.
 - Le regole accettano connessioni solo dalla subnet locale (`remoteip=LocalSubnet`) e solo sui profili di rete Privato e Dominio (`profile=private,domain`). Su una rete che Windows classifica come Pubblica (bar, hotel, aeroporto) gli altri computer non possono connettersi a LAN Transfer.
 - Se il destinatario non è visibile nella tua rete domestica, verifica nelle impostazioni di rete di Windows che la rete sia impostata come Privata.
-- La versione 1 creava regole denominate `LAN Transfer Discovery` e `LAN Transfer Transfer` per tutti i profili, compreso quello Pubblico. Se la versione 2 le trova, mostra un banner che propone di sostituirle. Non viene modificato nulla finché non fai clic su **Zaktualizuj reguły** (Aggiorna regole) e confermi la richiesta di Windows.
+- La versione 1 creava regole denominate `LAN Transfer Discovery` e `LAN Transfer Transfer` per tutti i profili, compreso quello Pubblico. Se la versione 2 le trova, mostra un banner che propone di sostituirle. Non viene modificato nulla finché non fai clic su **Aggiorna regole** e confermi la richiesta di Windows.
 
 ## Note sulla sicurezza
 
 - Il rilevamento tramite UDP non è autenticato; è solo un'indicazione. La fiducia deriva dall'abbinamento: il codice più l'impronta del certificato fissata.
 - Durante il primo abbinamento, un attaccante attivo sulla stessa rete (man in the middle) potrebbe spacciarsi per il destinatario. Prima di associare, confronta l'impronta del certificato su entrambi gli schermi.
-- Un mittente associato può sfogliare le cartelle del destinatario e salvare file in qualsiasi cartella esistente su di esso (l'opzione di destinazione personalizzata). Associa solo computer di cui ti fidi e usa **Nowy kod** per revocare tutti gli abbinamenti.
+- Un mittente associato può sfogliare le cartelle del destinatario e salvare file in qualsiasi cartella esistente su di esso (l'opzione di destinazione personalizzata). Associa solo computer di cui ti fidi e usa **Nuovo codice** per revocare tutti gli abbinamenti.
 - Le regole del firewall non aprono le porte sulle reti classificate come Pubbliche.
 
 ## Variabili d'ambiente
@@ -106,6 +118,7 @@ Sono pensate per test e automazione; l'uso normale non ne richiede nessuna.
 | `LANTRANSFER_PORT`, `LANTRANSFER_UDP_PORT` | porte diverse |
 | `LANTRANSFER_RECEIVE_DIR`, `LANTRANSFER_DATA_DIR` | cartella di ricezione, cartella dei dati del programma |
 | `LANTRANSFER_NAME` | nome del computer mostrato agli altri |
+| `LANTRANSFER_LANG` | lingua dell'interfaccia e della riga di comando (`en`, `de`, `pl`, …); ha la precedenza sulla scelta salvata |
 | `LANTRANSFER_LOOPBACK=1` | solo 127.0.0.1: niente broadcast, niente scansione della LAN, niente regole del firewall |
 | `LANTRANSFER_PEER_UDP_PORTS` | porte UDP di altre istanze in modalità loopback |
 | `LANTRANSFER_NO_FIREWALL=1` | non creare né controllare le regole del firewall |
@@ -118,11 +131,14 @@ Go 1.23 o successivo su Windows 10/11.
 ```powershell
 build.bat
 go test ./...
+python tools/check_i18n.py
 ```
 
-`build.bat` esegue i test e compila `LANTransfer.exe` (finestra) e `LANTransferCLI.exe` (console) con la versione indicata in `VERSION` (predefinita `2.0.0`). I test comprendono trasferimenti end-to-end su 127.0.0.1: abbinamento e blocco, rifiuto delle richieste non autenticate, file da 0 B a 96 MB, cartelle Unicode e percorsi oltre 260 caratteri, conflitti di nomi, nomi malevoli, un checksum errato, annullamento e ripresa, un disco pieno e il pinning del certificato.
+`build.bat` esegue i test e compila `LANTransfer.exe` (finestra) e `LANTransferCLI.exe` (console) con la versione indicata in `VERSION` (predefinita `2.1.0`). I test comprendono trasferimenti end-to-end su 127.0.0.1: abbinamento e blocco, rifiuto delle richieste non autenticate, file da 0 B a 96 MB, cartelle Unicode e percorsi oltre 260 caratteri, conflitti di nomi, nomi malevoli, un checksum errato, annullamento e ripresa, un disco pieno e il pinning del certificato.
 
-Note di rilascio: [docs/releases/v2.0.0.md](../docs/releases/v2.0.0.md).
+Le traduzioni si trovano in `locales/ui.<code>.json` (il polacco è la lingua di origine, l'inglese quella di riserva). `tools/check_i18n.py` verifica che tutti i 30 file abbiano le stesse chiavi, gli stessi segnaposto e le stesse forme plurali e che non contengano residui di polacco; un test Go verifica che ogni chiave usata dal programma esista in ogni lingua.
+
+Note di rilascio: [docs/releases/v2.1.0.md](../docs/releases/v2.1.0.md) · [v2.0.0](../docs/releases/v2.0.0.md).
 
 ## Licenza
 

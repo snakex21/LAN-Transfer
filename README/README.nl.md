@@ -11,6 +11,7 @@ Een kleine, draagbare tool om bestanden en mappen rechtstreeks tussen twee compu
 ## Inhoud
 
 - [Functies](#functies)
+- [Taal van de interface](#taal-van-de-interface)
 - [Schermafbeeldingen](#schermafbeeldingen)
 - [Downloaden en starten](#downloaden-en-starten)
 - [Hoe te koppelen](#hoe-te-koppelen)
@@ -34,8 +35,19 @@ Een kleine, draagbare tool om bestanden en mappen rechtstreeks tussen twee compu
 - Gevaarlijke namen worden geweigerd (`..`, absolute paden, alternatieve gegevensstromen `file:stream`, gereserveerde namen zoals `CON`, `NUL`, `COM1`). Vóór het ontvangen wordt de vrije schijfruimte gecontroleerd.
 - Slepen en neerzetten vanuit Verkenner, een wachtrij met voortgang per bestand, snelheid, resterende tijd, annuleren, hervatten en een geschiedenis van verzonden en ontvangen items.
 - Draagbaar: één EXE-bestand, met instellingen en geschiedenis in een map `data` ernaast.
+- Het venster, de titel en de uitvoer van de opdrachtregel in 30 talen (dezelfde als deze README), automatisch gekozen op basis van de weergavetaal van Windows; opmaak van rechts naar links voor Arabisch en Hebreeuws.
 
-De gebruikersinterface is momenteel in het Pools.
+## Taal van de interface
+
+LAN Transfer spreekt dezelfde 30 talen als deze README. Bij de eerste start gebruikt het de weergavetaal van Windows (de eerste ondersteunde taal in de lijst met talen van Windows); als Windows een taal gebruikt die niet in de lijst staat, is de interface in het Engels.
+
+Om de taal te wijzigen, klik je rechtsboven op de tandwielknop (**Instellingen**) en kies je een taal. Het venster, de titel en alle berichten schakelen direct om, en de keuze wordt opgeslagen in `data\settings.json`. **Automatisch (Windows)** volgt weer de weergavetaal van Windows. Getallen, groottes, snelheden, datums en meervoudsvormen volgen de regels van de gekozen taal; Arabisch en Hebreeuws gebruiken een gespiegelde opmaak van rechts naar links, terwijl paden, IP-adressen, codes en vingerafdrukken van links naar rechts blijven. Berichten van de andere computer (bijvoorbeeld “onvoldoende ruimte op de schijf van de ontvanger”) worden in jouw taal weergegeven, niet in die van de ontvanger.
+
+`LANTransferCLI.exe` gebruikt dezelfde taal. `LANTRANSFER_LANG` (bijvoorbeeld `LANTRANSFER_LANG=de`) heeft voorrang op de opgeslagen keuze, zowel in het venster als op de opdrachtregel.
+
+| English | Deutsch | العربية (RTL) |
+|---|---|---|
+| ![LAN Transfer in het Engels](../docs/screenshots/lang-en.png) | ![LAN Transfer in het Duits](../docs/screenshots/lang-de.png) | ![LAN Transfer in het Arabisch, opmaak van rechts naar links](../docs/screenshots/lang-ar.png) |
 
 ## Schermafbeeldingen
 
@@ -47,7 +59,7 @@ De gebruikersinterface is momenteel in het Pools.
 
 ## Downloaden en starten
 
-1. Download `LANTransfer-2.0.0-windows-amd64.zip` via [Releases](https://github.com/snakex21/LAN-Transfer/releases/latest) en controleer het aan de hand van het gepubliceerde `.sha256`-bestand.
+1. Download `LANTransfer-2.1.0-windows-amd64.zip` via [Releases](https://github.com/snakex21/LAN-Transfer/releases/latest) en controleer het aan de hand van het gepubliceerde `.sha256`-bestand.
 2. Pak het op beide computers uit in een willekeurige map.
 3. Start `LANTransfer.exe`. Bij de eerste start vraagt Windows (UAC) toestemming om twee firewallregels toe te voegen; zie [Poorten en firewall](#poorten-en-firewall).
 
@@ -56,18 +68,18 @@ Vereisten: Windows 10 of 11 (64-bit) met de WebView2-runtime, die deel uitmaakt 
 ## Hoe te koppelen
 
 1. Start LAN Transfer op beide computers. De ontvanger toont rechtsboven zijn koppelcode en de vingerafdruk van zijn certificaat.
-2. Klik op de verzendende computer op de ontvanger in de lijst **Odbiorca** (Ontvanger). Verschijnt hij niet, gebruik dan **Połącz ręcznie** (Handmatig verbinden) en voer zijn IP-adres in.
+2. Klik op de verzendende computer op de ontvanger in de lijst **Ontvanger**. Verschijnt hij niet, gebruik dan **Handmatig verbinden (IP-adres)** en voer zijn IP-adres in.
 3. Typ de 6-cijferige code van het scherm van de ontvanger en vergelijk de vingerafdruk van het certificaat in het dialoogvenster met die op de ontvanger. Als ze verschillen, ga dan niet verder.
-4. Klik op **Sparuj** (Koppelen). Het apparaat toont nu **sparowano** (gekoppeld).
+4. Klik op **Koppelen**. Het apparaat toont nu **✓ gekoppeld**.
 
-Na 5 foute codes vanaf één computer blokkeert de ontvanger verdere pogingen vanaf die computer. **Nowy kod** (Nieuwe code) maakt een nieuwe code aan en annuleert alle bestaande koppelingen. De ontvanger maakt bij elke start een nieuwe code en een nieuw certificaat aan; koppel dus opnieuw nadat de ontvanger opnieuw is gestart.
+Na 5 foute codes vanaf één computer blokkeert de ontvanger verdere pogingen vanaf die computer. **Nieuwe code** maakt een nieuwe code aan en annuleert alle bestaande koppelingen. De ontvanger maakt bij elke start een nieuwe code en een nieuw certificaat aan; koppel dus opnieuw nadat de ontvanger opnieuw is gestart.
 
 ## Bestanden verzenden
 
 1. Koppel met de ontvanger.
-2. Sleep bestanden of mappen naar het venster, gebruik **Wybierz pliki** / **Wybierz folder** (Bestanden kiezen / Map kiezen) of plak een pad.
+2. Sleep bestanden of mappen naar het venster, gebruik **Bestanden kiezen** / **Map kiezen** of plak een pad.
 3. Kies de bestemming: de standaardmap van de ontvanger (`Downloads\LAN Transfer`) of een andere bestaande map op de ontvanger.
-4. Klik op **Wyślij** (Verzenden). Elk item toont voortgang, snelheid en resterende tijd en kan worden geannuleerd. Een geannuleerde of onderbroken overdracht kan worden hervat; alleen het ontbrekende deel wordt verzonden.
+4. Klik op **Verzenden**. Elk item toont voortgang, snelheid en resterende tijd en kan worden geannuleerd. Een geannuleerde of onderbroken overdracht kan worden hervat; alleen het ontbrekende deel wordt verzonden.
 
 ## Opdrachtregel
 
@@ -88,13 +100,13 @@ De code kan ook worden doorgegeven via `LANTRANSFER_CODE`. Een ontvanger zonder 
 - Bij de eerste start vraagt de app eenmalig (UAC) om twee inkomende regels toe te voegen: `LAN Transfer 2 Discovery (UDP)` en `LAN Transfer 2 Transfer (TCP)`.
 - De regels accepteren alleen verbindingen vanuit het lokale subnet (`remoteip=LocalSubnet`) en alleen op de netwerkprofielen Privé en Domein (`profile=private,domain`). Op een netwerk dat Windows als Openbaar markeert (café, hotel, luchthaven) kunnen andere computers geen verbinding maken met LAN Transfer.
 - Als de ontvanger in je thuisnetwerk niet zichtbaar is, controleer dan in de netwerkinstellingen van Windows of het netwerk op Privé staat.
-- Versie 1 maakte regels aan met de namen `LAN Transfer Discovery` en `LAN Transfer Transfer` voor alle profielen, inclusief Openbaar. Als versie 2 ze vindt, toont die een banner met het aanbod om ze te vervangen. Er wordt niets gewijzigd totdat je op **Zaktualizuj reguły** (Regels bijwerken) klikt en de Windows-prompt bevestigt.
+- Versie 1 maakte regels aan met de namen `LAN Transfer Discovery` en `LAN Transfer Transfer` voor alle profielen, inclusief Openbaar. Als versie 2 ze vindt, toont die een banner met het aanbod om ze te vervangen. Er wordt niets gewijzigd totdat je op **Regels bijwerken** klikt en de Windows-prompt bevestigt.
 
 ## Opmerkingen over beveiliging
 
 - Detectie via UDP is niet geauthenticeerd; het is slechts een hint. Vertrouwen ontstaat door het koppelen: de code plus de vastgelegde vingerafdruk van het certificaat.
 - Tijdens de eerste koppeling kan een actieve aanvaller in hetzelfde netwerk (man-in-the-middle) zich voordoen als de ontvanger. Vergelijk vóór het koppelen de vingerafdruk van het certificaat op beide schermen.
-- Een gekoppelde afzender kan door de mappen van de ontvanger bladeren en bestanden opslaan in elke bestaande map daar (de optie voor een aangepaste bestemming). Koppel alleen computers die je vertrouwt en gebruik **Nowy kod** om alle koppelingen in te trekken.
+- Een gekoppelde afzender kan door de mappen van de ontvanger bladeren en bestanden opslaan in elke bestaande map daar (de optie voor een aangepaste bestemming). Koppel alleen computers die je vertrouwt en gebruik **Nieuwe code** om alle koppelingen in te trekken.
 - De firewallregels openen de poorten niet op netwerken die als Openbaar zijn gemarkeerd.
 
 ## Omgevingsvariabelen
@@ -106,6 +118,7 @@ Deze zijn bedoeld voor tests en automatisering; bij normaal gebruik is geen erva
 | `LANTRANSFER_PORT`, `LANTRANSFER_UDP_PORT` | andere poorten |
 | `LANTRANSFER_RECEIVE_DIR`, `LANTRANSFER_DATA_DIR` | ontvangstmap, map met programmagegevens |
 | `LANTRANSFER_NAME` | computernaam die anderen te zien krijgen |
+| `LANTRANSFER_LANG` | taal van de interface en de opdrachtregel (`en`, `de`, `pl`, …); heeft voorrang op de opgeslagen keuze |
 | `LANTRANSFER_LOOPBACK=1` | alleen 127.0.0.1: geen broadcasts, geen LAN-scan, geen firewallregels |
 | `LANTRANSFER_PEER_UDP_PORTS` | UDP-poorten van andere instanties in loopbackmodus |
 | `LANTRANSFER_NO_FIREWALL=1` | firewallregels niet aanmaken of controleren |
@@ -118,11 +131,14 @@ Go 1.23 of nieuwer op Windows 10/11.
 ```powershell
 build.bat
 go test ./...
+python tools/check_i18n.py
 ```
 
-`build.bat` voert de tests uit en bouwt `LANTransfer.exe` (venster) en `LANTransferCLI.exe` (console) met de versie uit `VERSION` (standaard `2.0.0`). De tests omvatten end-to-end-overdrachten via 127.0.0.1: koppelen en blokkering, geweigerde niet-geauthenticeerde verzoeken, bestanden van 0 B tot 96 MB, Unicode-mappen en paden langer dan 260 tekens, naamconflicten, kwaadaardige namen, een onjuiste checksum, annuleren en hervatten, een volle schijf en certificaat-pinning.
+`build.bat` voert de tests uit en bouwt `LANTransfer.exe` (venster) en `LANTransferCLI.exe` (console) met de versie uit `VERSION` (standaard `2.1.0`). De tests omvatten end-to-end-overdrachten via 127.0.0.1: koppelen en blokkering, geweigerde niet-geauthenticeerde verzoeken, bestanden van 0 B tot 96 MB, Unicode-mappen en paden langer dan 260 tekens, naamconflicten, kwaadaardige namen, een onjuiste checksum, annuleren en hervatten, een volle schijf en certificaat-pinning.
 
-Releaseopmerkingen: [docs/releases/v2.0.0.md](../docs/releases/v2.0.0.md).
+De vertalingen staan in `locales/ui.<code>.json` (Pools is de brontaal, Engels de terugvaltaal). `tools/check_i18n.py` controleert of alle 30 bestanden dezelfde sleutels, placeholders en meervoudsvormen hebben en geen Poolse resten bevatten; een Go-test controleert of elke sleutel die het programma gebruikt in elke taal bestaat.
+
+Releaseopmerkingen: [docs/releases/v2.1.0.md](../docs/releases/v2.1.0.md) · [v2.0.0](../docs/releases/v2.0.0.md).
 
 ## Licentie
 

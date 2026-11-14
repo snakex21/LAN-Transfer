@@ -11,6 +11,7 @@ Pieni siirrettävä työkalu tiedostojen ja kansioiden lähettämiseen suoraan k
 ## Sisältö
 
 - [Ominaisuudet](#ominaisuudet)
+- [Käyttöliittymän kieli](#käyttöliittymän-kieli)
 - [Kuvakaappaukset](#kuvakaappaukset)
 - [Lataus ja käynnistys](#lataus-ja-käynnistys)
 - [Pariliitoksen muodostaminen](#pariliitoksen-muodostaminen)
@@ -34,8 +35,19 @@ Pieni siirrettävä työkalu tiedostojen ja kansioiden lähettämiseen suoraan k
 - Vaaralliset nimet hylätään (`..`, absoluuttiset polut, vaihtoehtoiset tietovirrat `file:stream`, varatut nimet kuten `CON`, `NUL`, `COM1`). Vapaa levytila tarkistetaan ennen vastaanottamista.
 - Vedä ja pudota Resurssienhallinnasta, jono, jossa näkyy tiedostokohtainen edistyminen, nopeus ja jäljellä oleva aika, peruutus, jatkaminen sekä lähetettyjen ja vastaanotettujen kohteiden historia.
 - Siirrettävä: yksi EXE-tiedosto, asetukset ja historia sen vieressä olevassa `data`-kansiossa.
+- Ikkuna, sen otsikko ja komentorivin tulosteet 30 kielellä (samat kuin tällä README-tiedostolla); kieli valitaan automaattisesti Windowsin näyttökielen mukaan, ja arabiassa ja hepreassa käytetään oikealta vasemmalle -asettelua.
 
-Käyttöliittymä on tällä hetkellä puolankielinen.
+## Käyttöliittymän kieli
+
+LAN Transfer on saatavilla samoilla 30 kielellä kuin tämä README-tiedosto. Ensimmäisellä käynnistyskerralla se käyttää Windowsin näyttökieltä (ensimmäistä tuettua kieltä Windowsin kieliluettelossa); jos Windowsin kieli ei ole luettelossa, käyttöliittymä on englanninkielinen.
+
+Voit vaihtaa kielen napsauttamalla oikean yläkulman rataspainiketta (**Asetukset**) ja valitsemalla kielen. Ikkuna, sen otsikko ja kaikki viestit vaihtuvat heti, ja valinta tallennetaan tiedostoon `data\settings.json`. **Automaattinen (Windows)** palauttaa kielen seuraamaan Windowsin näyttökieltä. Luvut, koot, nopeudet, päivämäärät ja monikkomuodot noudattavat valitun kielen sääntöjä; arabiassa ja hepreassa käytetään peilattua oikealta vasemmalle -asettelua, mutta polut, IP-osoitteet, koodit ja sormenjäljet näytetään edelleen vasemmalta oikealle. Toisen tietokoneen viestit (esimerkiksi ”vastaanottajan levyllä ei ole tarpeeksi tilaa”) näytetään sinun kielelläsi eikä vastaanottajan kielellä.
+
+`LANTransferCLI.exe` käyttää samaa kieltä. `LANTRANSFER_LANG` (esimerkiksi `LANTRANSFER_LANG=de`) ohittaa tallennetun valinnan sekä ikkunassa että komentorivillä.
+
+| English | Deutsch | العربية (RTL) |
+|---|---|---|
+| ![LAN Transfer englanniksi](../docs/screenshots/lang-en.png) | ![LAN Transfer saksaksi](../docs/screenshots/lang-de.png) | ![LAN Transfer arabiaksi, oikealta vasemmalle -asettelu](../docs/screenshots/lang-ar.png) |
 
 ## Kuvakaappaukset
 
@@ -47,7 +59,7 @@ Käyttöliittymä on tällä hetkellä puolankielinen.
 
 ## Lataus ja käynnistys
 
-1. Lataa `LANTransfer-2.0.0-windows-amd64.zip` sivulta [Releases](https://github.com/snakex21/LAN-Transfer/releases/latest) ja tarkista se julkaistua `.sha256`-tiedostoa vasten.
+1. Lataa `LANTransfer-2.1.0-windows-amd64.zip` sivulta [Releases](https://github.com/snakex21/LAN-Transfer/releases/latest) ja tarkista se julkaistua `.sha256`-tiedostoa vasten.
 2. Pura se mihin tahansa kansioon molemmilla tietokoneilla.
 3. Käynnistä `LANTransfer.exe`. Ensimmäisellä käynnistyskerralla Windows pyytää (UAC) lupaa lisätä kaksi palomuurisääntöä; katso [Portit ja palomuuri](#portit-ja-palomuuri).
 
@@ -56,18 +68,18 @@ Vaatimukset: Windows 10 tai 11 (64-bittinen) ja WebView2-suorituspalvelu, joka s
 ## Pariliitoksen muodostaminen
 
 1. Käynnistä LAN Transfer molemmilla tietokoneilla. Vastaanottaja näyttää pariliitoskoodinsa ja varmenteensa sormenjäljen oikeassa yläkulmassa.
-2. Napsauta lähettävällä tietokoneella vastaanottajaa **Odbiorca** (Vastaanottaja) -luettelossa. Jos sitä ei näy, käytä toimintoa **Połącz ręcznie** (Yhdistä manuaalisesti) ja anna sen IP-osoite.
+2. Napsauta lähettävällä tietokoneella vastaanottajaa **Vastaanottaja**-luettelossa. Jos sitä ei näy, käytä toimintoa **Muodosta yhteys manuaalisesti (IP-osoite)** ja anna sen IP-osoite.
 3. Kirjoita vastaanottajan näytöllä näkyvä 6-numeroinen koodi ja vertaa valintaikkunassa näkyvää varmenteen sormenjälkeä vastaanottajan näyttämään. Jos ne eroavat, älä jatka.
-4. Napsauta **Sparuj** (Muodosta pariliitos). Laitteen kohdalla näkyy nyt **sparowano** (pariliitetty).
+4. Napsauta **Muodosta pariliitos**. Laitteen kohdalla näkyy nyt **✓ pariliitetty**.
 
-Kun yhdeltä tietokoneelta on syötetty 5 väärää koodia, vastaanottaja estää siltä uudet yritykset. **Nowy kod** (Uusi koodi) luo uuden koodin ja peruuttaa kaikki olemassa olevat pariliitokset. Vastaanottaja luo uuden koodin ja varmenteen joka käynnistyksellä, joten muodosta pariliitos uudelleen vastaanottajan uudelleenkäynnistyksen jälkeen.
+Kun yhdeltä tietokoneelta on syötetty 5 väärää koodia, vastaanottaja estää siltä uudet yritykset. **Uusi koodi** luo uuden koodin ja peruuttaa kaikki olemassa olevat pariliitokset. Vastaanottaja luo uuden koodin ja varmenteen joka käynnistyksellä, joten muodosta pariliitos uudelleen vastaanottajan uudelleenkäynnistyksen jälkeen.
 
 ## Tiedostojen lähettäminen
 
 1. Muodosta pariliitos vastaanottajan kanssa.
-2. Vedä tiedostoja tai kansioita ikkunaan, käytä painikkeita **Wybierz pliki** / **Wybierz folder** (Valitse tiedostot / Valitse kansio) tai liitä polku.
+2. Vedä tiedostoja tai kansioita ikkunaan, käytä painikkeita **Valitse tiedostot** / **Valitse kansio** tai liitä polku.
 3. Valitse kohde: vastaanottajan oletuskansio (`Downloads\LAN Transfer`) tai jokin muu vastaanottajan olemassa oleva kansio.
-4. Napsauta **Wyślij** (Lähetä). Jokaisen kohteen edistyminen, nopeus ja jäljellä oleva aika näytetään, ja sen voi peruuttaa. Peruutettua tai keskeytynyttä siirtoa voi jatkaa; vain puuttuva osa lähetetään.
+4. Napsauta **Lähetä**. Jokaisen kohteen edistyminen, nopeus ja jäljellä oleva aika näytetään, ja sen voi peruuttaa. Peruutettua tai keskeytynyttä siirtoa voi jatkaa; vain puuttuva osa lähetetään.
 
 ## Komentorivi
 
@@ -88,13 +100,13 @@ Koodin voi antaa myös muuttujassa `LANTRANSFER_CODE`. Ilman ikkunaa toimiva vas
 - Ensimmäisellä käynnistyskerralla sovellus pyytää kerran (UAC) lupaa lisätä kaksi saapuvan liikenteen sääntöä: `LAN Transfer 2 Discovery (UDP)` ja `LAN Transfer 2 Transfer (TCP)`.
 - Säännöt hyväksyvät yhteyksiä vain paikallisesta aliverkosta (`remoteip=LocalSubnet`) ja vain verkkoprofiileissa Yksityinen ja Toimialue (`profile=private,domain`). Verkossa, jonka Windows merkitsee julkiseksi (kahvila, hotelli, lentoasema), muut tietokoneet eivät voi muodostaa yhteyttä LAN Transferiin.
 - Jos vastaanottaja ei näy kotiverkossasi, tarkista Windowsin verkkoasetuksista, että verkon tyypiksi on asetettu Yksityinen.
-- Versio 1 loi säännöt nimeltä `LAN Transfer Discovery` ja `LAN Transfer Transfer` kaikille profiileille, myös Julkinen-profiilille. Jos versio 2 löytää ne, se näyttää bannerin, jossa tarjotaan niiden korvaamista. Mitään ei muuteta ennen kuin napsautat **Zaktualizuj reguły** (Päivitä säännöt) ja vahvistat Windowsin kehotteen.
+- Versio 1 loi säännöt nimeltä `LAN Transfer Discovery` ja `LAN Transfer Transfer` kaikille profiileille, myös Julkinen-profiilille. Jos versio 2 löytää ne, se näyttää bannerin, jossa tarjotaan niiden korvaamista. Mitään ei muuteta ennen kuin napsautat **Päivitä säännöt** ja vahvistat Windowsin kehotteen.
 
 ## Tietoturvahuomautukset
 
 - UDP:n kautta tapahtuvaa löytämistä ei todenneta; se on vain vihje. Luottamus perustuu pariliitokseen: koodiin ja kiinnitettyyn varmenteen sormenjälkeen.
 - Ensimmäisen pariliitoksen aikana samassa verkossa oleva aktiivinen hyökkääjä (man-in-the-middle) voisi esiintyä vastaanottajana. Vertaa varmenteen sormenjälkeä molemmilla näytöillä ennen pariliitoksen muodostamista.
-- Pariliitetty lähettäjä voi selata vastaanottajan kansioita ja tallentaa tiedostoja mihin tahansa siellä olemassa olevaan kansioon (mukautetun kohteen asetus). Muodosta pariliitos vain luotettujen tietokoneiden kanssa ja peruuta kaikki pariliitokset toiminnolla **Nowy kod**.
+- Pariliitetty lähettäjä voi selata vastaanottajan kansioita ja tallentaa tiedostoja mihin tahansa siellä olemassa olevaan kansioon (mukautetun kohteen asetus). Muodosta pariliitos vain luotettujen tietokoneiden kanssa ja peruuta kaikki pariliitokset toiminnolla **Uusi koodi**.
 - Palomuurisäännöt eivät avaa portteja verkoissa, jotka on merkitty julkisiksi.
 
 ## Ympäristömuuttujat
@@ -106,6 +118,7 @@ Nämä on tarkoitettu testaukseen ja automaatioon; tavallisessa käytössä mit�
 | `LANTRANSFER_PORT`, `LANTRANSFER_UDP_PORT` | muut portit |
 | `LANTRANSFER_RECEIVE_DIR`, `LANTRANSFER_DATA_DIR` | vastaanottokansio, ohjelman datakansio |
 | `LANTRANSFER_NAME` | muille näytettävä tietokoneen nimi |
+| `LANTRANSFER_LANG` | käyttöliittymän ja komentorivin kieli (`en`, `de`, `pl`, …); ohittaa tallennetun valinnan |
 | `LANTRANSFER_LOOPBACK=1` | vain 127.0.0.1: ei yleislähetyksiä, ei LAN-skannausta, ei palomuurisääntöjä |
 | `LANTRANSFER_PEER_UDP_PORTS` | muiden instanssien UDP-portit loopback-tilassa |
 | `LANTRANSFER_NO_FIREWALL=1` | älä luo tai tarkista palomuurisääntöjä |
@@ -118,11 +131,14 @@ Go 1.23 tai uudempi, Windows 10/11.
 ```powershell
 build.bat
 go test ./...
+python tools/check_i18n.py
 ```
 
-`build.bat` suorittaa testit ja kääntää tiedostot `LANTransfer.exe` (ikkuna) ja `LANTransferCLI.exe` (konsoli) käyttäen versiota tiedostosta `VERSION` (oletus `2.0.0`). Testit sisältävät päästä päähän -siirtoja osoitteen 127.0.0.1 kautta: pariliitos ja lukitus, hylätyt todentamattomat pyynnöt, tiedostot 0 B:stä 96 Mt:hen, Unicode-kansiot ja yli 260 merkin polut, nimiristiriidat, vihamieliset nimet, väärä tarkistussumma, peruutus ja jatkaminen, täysi levy sekä varmenteen kiinnitys.
+`build.bat` suorittaa testit ja kääntää tiedostot `LANTransfer.exe` (ikkuna) ja `LANTransferCLI.exe` (konsoli) käyttäen versiota tiedostosta `VERSION` (oletus `2.1.0`). Testit sisältävät päästä päähän -siirtoja osoitteen 127.0.0.1 kautta: pariliitos ja lukitus, hylätyt todentamattomat pyynnöt, tiedostot 0 B:stä 96 Mt:hen, Unicode-kansiot ja yli 260 merkin polut, nimiristiriidat, vihamieliset nimet, väärä tarkistussumma, peruutus ja jatkaminen, täysi levy sekä varmenteen kiinnitys.
 
-Julkaisutiedot: [docs/releases/v2.0.0.md](../docs/releases/v2.0.0.md).
+Käännökset ovat tiedostoissa `locales/ui.<code>.json` (puola on lähdekieli ja englanti varakieli). `tools/check_i18n.py` tarkistaa, että kaikissa 30 tiedostossa on samat avaimet, paikkamerkit ja monikkomuodot eikä niissä ole jäljellä puolankielistä tekstiä; Go-testi tarkistaa, että jokainen ohjelman käyttämä avain on olemassa jokaisessa kielessä.
+
+Julkaisutiedot: [docs/releases/v2.1.0.md](../docs/releases/v2.1.0.md) · [v2.0.0](../docs/releases/v2.0.0.md).
 
 ## Lisenssi
 

@@ -11,6 +11,7 @@ Ett litet portabelt verktyg för att skicka filer och mappar direkt mellan två 
 ## Innehåll
 
 - [Funktioner](#funktioner)
+- [Gränssnittsspråk](#gränssnittsspråk)
 - [Skärmbilder](#skärmbilder)
 - [Ladda ner och kör](#ladda-ner-och-kör)
 - [Så parkopplar du](#så-parkopplar-du)
@@ -34,8 +35,19 @@ Ett litet portabelt verktyg för att skicka filer och mappar direkt mellan två 
 - Farliga namn avvisas (`..`, absoluta sökvägar, alternativa dataströmmar `file:stream`, reserverade namn som `CON`, `NUL`, `COM1`). Ledigt diskutrymme kontrolleras innan mottagning.
 - Dra och släpp från Utforskaren, en kö med förlopp per fil, hastighet, återstående tid, avbryt, återuppta och en historik över skickade och mottagna objekt.
 - Portabelt: en enda EXE-fil, med inställningar och historik i en mapp `data` bredvid den.
+- Fönstret, dess titel och kommandoradens utdata på 30 språk (samma som den här README-filen), valt automatiskt utifrån visningsspråket i Windows; layout från höger till vänster för arabiska och hebreiska.
 
-Användargränssnittet är för närvarande på polska.
+## Gränssnittsspråk
+
+LAN Transfer talar samma 30 språk som den här README-filen. Vid första starten används visningsspråket i Windows (det första språket som stöds i språklistan i Windows); om Windows använder ett språk som inte finns i listan visas gränssnittet på engelska.
+
+Om du vill ändra språket klickar du på kugghjulsknappen (**Inställningar**) i det övre högra hörnet och väljer ett språk. Fönstret, titeln och alla meddelanden byter språk direkt, och valet sparas i `data\settings.json`. **Automatiskt (Windows)** följer återigen visningsspråket i Windows. Tal, storlekar, hastigheter, datum och pluralformer följer reglerna för det valda språket; arabiska och hebreiska använder en spegelvänd layout från höger till vänster, medan sökvägar, IP-adresser, koder och fingeravtryck fortsätter att visas från vänster till höger. Meddelanden från den andra datorn (till exempel ”inte tillräckligt med utrymme på mottagarens disk”) visas på ditt språk, inte på mottagarens.
+
+`LANTransferCLI.exe` använder samma språk. `LANTRANSFER_LANG` (till exempel `LANTRANSFER_LANG=de`) har företräde framför det sparade valet både i fönstret och på kommandoraden.
+
+| English | Deutsch | العربية (RTL) |
+|---|---|---|
+| ![LAN Transfer på engelska](../docs/screenshots/lang-en.png) | ![LAN Transfer på tyska](../docs/screenshots/lang-de.png) | ![LAN Transfer på arabiska, layout från höger till vänster](../docs/screenshots/lang-ar.png) |
 
 ## Skärmbilder
 
@@ -47,7 +59,7 @@ Användargränssnittet är för närvarande på polska.
 
 ## Ladda ner och kör
 
-1. Ladda ner `LANTransfer-2.0.0-windows-amd64.zip` från [Releases](https://github.com/snakex21/LAN-Transfer/releases/latest) och kontrollera den mot den publicerade `.sha256`-filen.
+1. Ladda ner `LANTransfer-2.1.0-windows-amd64.zip` från [Releases](https://github.com/snakex21/LAN-Transfer/releases/latest) och kontrollera den mot den publicerade `.sha256`-filen.
 2. Packa upp den till valfri mapp på båda datorerna.
 3. Starta `LANTransfer.exe`. Vid första starten ber Windows (UAC) om tillåtelse att lägga till två brandväggsregler; se [Portar och brandvägg](#portar-och-brandvägg).
 
@@ -56,18 +68,18 @@ Krav: Windows 10 eller 11 (64-bitars) med WebView2-runtime, som ingår i aktuell
 ## Så parkopplar du
 
 1. Starta LAN Transfer på båda datorerna. Mottagaren visar sin parkopplingskod och sitt certifikatfingeravtryck i det övre högra hörnet.
-2. Klicka på mottagaren i listan **Odbiorca** (Mottagare) på den sändande datorn. Om den inte visas använder du **Połącz ręcznie** (Anslut manuellt) och anger dess IP-adress.
+2. Klicka på mottagaren i listan **Mottagare** på den sändande datorn. Om den inte visas använder du **Anslut manuellt (IP-adress)** och anger dess IP-adress.
 3. Skriv in den 6-siffriga koden från mottagarens skärm och jämför certifikatets fingeravtryck i dialogrutan med det som visas på mottagaren. Om de skiljer sig åt ska du inte fortsätta.
-4. Klicka på **Sparuj** (Parkoppla). Enheten visar nu **sparowano** (parkopplad).
+4. Klicka på **Parkoppla**. Enheten visar nu **✓ parkopplad**.
 
-Efter 5 felaktiga koder från en dator blockerar mottagaren ytterligare försök från den datorn. **Nowy kod** (Ny kod) skapar en ny kod och upphäver alla befintliga parkopplingar. Mottagaren skapar en ny kod och ett nytt certifikat varje gång den startar, så parkoppla igen efter att mottagaren har startats om.
+Efter 5 felaktiga koder från en dator blockerar mottagaren ytterligare försök från den datorn. **Ny kod** skapar en ny kod och upphäver alla befintliga parkopplingar. Mottagaren skapar en ny kod och ett nytt certifikat varje gång den startar, så parkoppla igen efter att mottagaren har startats om.
 
 ## Skicka filer
 
 1. Parkoppla med mottagaren.
-2. Dra filer eller mappar till fönstret, använd **Wybierz pliki** / **Wybierz folder** (Välj filer / Välj mapp) eller klistra in en sökväg.
+2. Dra filer eller mappar till fönstret, använd **Välj filer** / **Välj mapp** eller klistra in en sökväg.
 3. Välj mål: mottagarens standardmapp (`Downloads\LAN Transfer`) eller en annan befintlig mapp på mottagaren.
-4. Klicka på **Wyślij** (Skicka). Varje objekt visar förlopp, hastighet och återstående tid och kan avbrytas. En överföring som har avbrutits manuellt eller av andra orsaker kan återupptas; endast den saknade delen skickas.
+4. Klicka på **Skicka**. Varje objekt visar förlopp, hastighet och återstående tid och kan avbrytas. En överföring som har avbrutits manuellt eller av andra orsaker kan återupptas; endast den saknade delen skickas.
 
 ## Kommandorad
 
@@ -88,13 +100,13 @@ Koden kan också anges i `LANTRANSFER_CODE`. En mottagare utan fönster kan anv�
 - Vid första starten ber appen en gång (UAC) om att få lägga till två inkommande regler: `LAN Transfer 2 Discovery (UDP)` och `LAN Transfer 2 Transfer (TCP)`.
 - Reglerna accepterar endast anslutningar från det lokala undernätet (`remoteip=LocalSubnet`) och endast i nätverksprofilerna Privat och Domän (`profile=private,domain`). I ett nätverk som Windows markerar som Offentligt (kafé, hotell, flygplats) kan andra datorer inte ansluta till LAN Transfer.
 - Om mottagaren inte syns i ditt hemnätverk kontrollerar du att nätverket är inställt som Privat i nätverksinställningarna i Windows.
-- Version 1 skapade regler med namnen `LAN Transfer Discovery` och `LAN Transfer Transfer` för alla profiler, även Offentligt. Om version 2 hittar dem visas en banderoll som erbjuder att ersätta dem. Ingenting ändras förrän du klickar på **Zaktualizuj reguły** (Uppdatera regler) och bekräftar Windows-frågan.
+- Version 1 skapade regler med namnen `LAN Transfer Discovery` och `LAN Transfer Transfer` för alla profiler, även Offentligt. Om version 2 hittar dem visas en banderoll som erbjuder att ersätta dem. Ingenting ändras förrän du klickar på **Uppdatera regler** och bekräftar Windows-frågan.
 
 ## Säkerhetsaspekter
 
 - Identifiering via UDP är inte autentiserad; den är bara en ledtråd. Förtroendet kommer från parkopplingen: koden plus det fästa certifikatfingeravtrycket.
 - Vid den första parkopplingen kan en aktiv angripare i samma nätverk (man-in-the-middle) utge sig för att vara mottagaren. Jämför certifikatets fingeravtryck på båda skärmarna innan du parkopplar.
-- En parkopplad avsändare kan bläddra i mottagarens mappar och spara filer i valfri befintlig mapp där (alternativet för anpassat mål). Parkoppla bara datorer du litar på och använd **Nowy kod** för att återkalla alla parkopplingar.
+- En parkopplad avsändare kan bläddra i mottagarens mappar och spara filer i valfri befintlig mapp där (alternativet för anpassat mål). Parkoppla bara datorer du litar på och använd **Ny kod** för att återkalla alla parkopplingar.
 - Brandväggsreglerna öppnar inte portarna i nätverk som är markerade som Offentliga.
 
 ## Miljövariabler
@@ -106,6 +118,7 @@ Dessa är avsedda för tester och automatisering; vid normal användning behövs
 | `LANTRANSFER_PORT`, `LANTRANSFER_UDP_PORT` | andra portar |
 | `LANTRANSFER_RECEIVE_DIR`, `LANTRANSFER_DATA_DIR` | mottagningsmapp, mapp för programdata |
 | `LANTRANSFER_NAME` | datornamn som visas för andra |
+| `LANTRANSFER_LANG` | språk för gränssnittet och kommandoraden (`en`, `de`, `pl`, …); har företräde framför det sparade valet |
 | `LANTRANSFER_LOOPBACK=1` | endast 127.0.0.1: inga broadcasts, ingen LAN-skanning, inga brandväggsregler |
 | `LANTRANSFER_PEER_UDP_PORTS` | UDP-portar för andra instanser i loopback-läge |
 | `LANTRANSFER_NO_FIREWALL=1` | skapa eller kontrollera inte brandväggsregler |
@@ -118,11 +131,14 @@ Go 1.23 eller senare på Windows 10/11.
 ```powershell
 build.bat
 go test ./...
+python tools/check_i18n.py
 ```
 
-`build.bat` kör testerna och bygger `LANTransfer.exe` (fönster) och `LANTransferCLI.exe` (konsol) med versionen från `VERSION` (standard `2.0.0`). Testerna omfattar överföringar från början till slut över 127.0.0.1: parkoppling och spärr, avvisade oautentiserade förfrågningar, filer från 0 B till 96 MB, Unicode-mappar och sökvägar över 260 tecken, namnkonflikter, skadliga namn, en felaktig kontrollsumma, avbrytning och återupptagning, en full disk och certifikat-pinning.
+`build.bat` kör testerna och bygger `LANTransfer.exe` (fönster) och `LANTransferCLI.exe` (konsol) med versionen från `VERSION` (standard `2.1.0`). Testerna omfattar överföringar från början till slut över 127.0.0.1: parkoppling och spärr, avvisade oautentiserade förfrågningar, filer från 0 B till 96 MB, Unicode-mappar och sökvägar över 260 tecken, namnkonflikter, skadliga namn, en felaktig kontrollsumma, avbrytning och återupptagning, en full disk och certifikat-pinning.
 
-Versionsinformation: [docs/releases/v2.0.0.md](../docs/releases/v2.0.0.md).
+Översättningarna finns i `locales/ui.<code>.json` (polska är källspråket, engelska reservspråket). `tools/check_i18n.py` kontrollerar att alla 30 filer har samma nycklar, platshållare och pluralformer och inte innehåller några polska rester; ett Go-test kontrollerar att varje nyckel som programmet använder finns på alla språk.
+
+Versionsinformation: [docs/releases/v2.1.0.md](../docs/releases/v2.1.0.md) · [v2.0.0](../docs/releases/v2.0.0.md).
 
 ## Licens
 

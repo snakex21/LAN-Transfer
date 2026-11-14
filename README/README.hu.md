@@ -11,6 +11,7 @@ Kis méretű, hordozható eszköz fájlok és mappák közvetlen küldésére k�
 ## Tartalom
 
 - [Funkciók](#funkciók)
+- [A felület nyelve](#a-felület-nyelve)
 - [Képernyőképek](#képernyőképek)
 - [Letöltés és futtatás](#letöltés-és-futtatás)
 - [A párosítás menete](#a-párosítás-menete)
@@ -34,8 +35,19 @@ Kis méretű, hordozható eszköz fájlok és mappák közvetlen küldésére k�
 - A veszélyes nevek elutasításra kerülnek (`..`, abszolút elérési utak, `file:stream` alternatív adatfolyamok, fenntartott nevek, például `CON`, `NUL`, `COM1`). Fogadás előtt a program ellenőrzi a szabad lemezterületet.
 - Húzás és ejtés a Fájlkezelőből, sor fájlonkénti folyamatjelzővel, sebességgel, hátralévő idővel, megszakítással, folytatással, valamint az elküldött és fogadott elemek előzményei.
 - Hordozható: egyetlen EXE, a beállítások és az előzmények a mellette lévő `data` mappában.
+- Az ablak, a címsora és a parancssori kimenet 30 nyelven (ugyanazokon, mint ez a README), a Windows megjelenítési nyelve alapján automatikusan kiválasztva; jobbról balra haladó elrendezés arab és héber nyelven.
 
-A felhasználói felület jelenleg lengyel nyelvű.
+## A felület nyelve
+
+A LAN Transfer ugyanazon a 30 nyelven érhető el, mint ez a README. Az első indításkor a Windows megjelenítési nyelvét használja (a Windows nyelvlistájának első támogatott nyelvét); ha a Windows olyan nyelvet használ, amely nem szerepel a listán, a felület angol nyelvű lesz.
+
+A módosításhoz kattintson a jobb felső sarokban a fogaskerék gombra (**Beállítások**), és válasszon nyelvet. Az ablak, a címsora és az összes üzenet azonnal átvált, a választás pedig a `data\settings.json` fájlba kerül. Az **Automatikus (Windows)** beállítással a program ismét a Windows megjelenítési nyelvét követi. A számok, méretek, sebességek, dátumok és többes számú alakok a kiválasztott nyelv szabályait követik; arab és héber nyelven tükrözött, jobbról balra haladó elrendezés jelenik meg, az elérési utak, IP-címek, kódok és ujjlenyomatok azonban továbbra is balról jobbra olvashatók. A másik számítógéptől érkező üzenetek (például „nincs elég hely a fogadó lemezén”) az Ön nyelvén jelennek meg, nem a fogadóén.
+
+A `LANTransferCLI.exe` ugyanazt a nyelvet használja. A `LANTRANSFER_LANG` változó (például `LANTRANSFER_LANG=de`) az ablakban és a parancssorban egyaránt felülbírálja a mentett választást.
+
+| English | Deutsch | العربية (RTL) |
+|---|---|---|
+| ![A LAN Transfer angolul](../docs/screenshots/lang-en.png) | ![A LAN Transfer németül](../docs/screenshots/lang-de.png) | ![A LAN Transfer arabul, jobbról balra haladó elrendezéssel](../docs/screenshots/lang-ar.png) |
 
 ## Képernyőképek
 
@@ -47,7 +59,7 @@ A felhasználói felület jelenleg lengyel nyelvű.
 
 ## Letöltés és futtatás
 
-1. Töltse le a `LANTransfer-2.0.0-windows-amd64.zip` fájlt a [Releases](https://github.com/snakex21/LAN-Transfer/releases/latest) oldalról, és ellenőrizze a közzétett `.sha256` fájllal.
+1. Töltse le a `LANTransfer-2.1.0-windows-amd64.zip` fájlt a [Releases](https://github.com/snakex21/LAN-Transfer/releases/latest) oldalról, és ellenőrizze a közzétett `.sha256` fájllal.
 2. Csomagolja ki tetszőleges mappába mindkét számítógépen.
 3. Indítsa el a `LANTransfer.exe` fájlt. Az első indításkor a Windows (UAC) engedélyt kér két tűzfalszabály hozzáadásához; lásd: [Portok és tűzfal](#portok-és-tűzfal).
 
@@ -56,18 +68,18 @@ Követelmények: Windows 10 vagy 11 (64 bites) a WebView2 futtatókörnyezettel,
 ## A párosítás menete
 
 1. Indítsa el a LAN Transfert mindkét számítógépen. A fogadó a jobb felső sarokban mutatja a párosítási kódját és a tanúsítványa ujjlenyomatát.
-2. A küldő számítógépen kattintson a fogadóra az **Odbiorca** (Fogadó) listában. Ha nem jelenik meg, használja a **Połącz ręcznie** (Kézi csatlakozás) lehetőséget, és adja meg az IP-címét.
+2. A küldő számítógépen kattintson a fogadóra a **Fogadó** listában. Ha nem jelenik meg, használja a **Csatlakozás manuálisan (IP-cím)** lehetőséget, és adja meg az IP-címét.
 3. Írja be a fogadó képernyőjén látható 6 jegyű kódot, és vesse össze a párbeszédablakban megjelenő tanúsítvány-ujjlenyomatot a fogadón látható ujjlenyomattal. Ha eltérnek, ne folytassa.
-4. Kattintson a **Sparuj** (Párosítás) gombra. Az eszköz ekkor a **sparowano** (párosítva) állapotot mutatja.
+4. Kattintson a **Párosítás** gombra. Az eszköz ekkor a **✓ párosítva** állapotot mutatja.
 
-Ha egy számítógépről 5 hibás kód érkezik, a fogadó letiltja az onnan érkező további próbálkozásokat. A **Nowy kod** (Új kód) új kódot hoz létre, és megszünteti az összes meglévő párosítást. A fogadó minden indításkor új kódot és tanúsítványt hoz létre, ezért a fogadó újraindítása után ismét párosítani kell.
+Ha egy számítógépről 5 hibás kód érkezik, a fogadó letiltja az onnan érkező további próbálkozásokat. Az **Új kód** új kódot hoz létre, és megszünteti az összes meglévő párosítást. A fogadó minden indításkor új kódot és tanúsítványt hoz létre, ezért a fogadó újraindítása után ismét párosítani kell.
 
 ## Fájlok küldése
 
 1. Párosítsa a gépet a fogadóval.
-2. Húzza a fájlokat vagy mappákat az ablakba, használja a **Wybierz pliki** / **Wybierz folder** (Fájlok kiválasztása / Mappa kiválasztása) gombot, vagy illesszen be egy elérési utat.
+2. Húzza a fájlokat vagy mappákat az ablakba, használja a **Fájlok kiválasztása** / **Mappa kiválasztása** gombot, vagy illesszen be egy elérési utat.
 3. Válassza ki a célt: a fogadó alapértelmezett mappáját (`Downloads\LAN Transfer`) vagy egy másik, a fogadón már létező mappát.
-4. Kattintson a **Wyślij** (Küldés) gombra. Minden elemnél látható a folyamat, a sebesség és a hátralévő idő, és az elem megszakítható. A megszakított vagy félbeszakadt átvitel folytatható; ilyenkor csak a hiányzó rész kerül elküldésre.
+4. Kattintson a **Küldés** gombra. Minden elemnél látható a folyamat, a sebesség és a hátralévő idő, és az elem megszakítható. A megszakított vagy félbeszakadt átvitel folytatható; ilyenkor csak a hiányzó rész kerül elküldésre.
 
 ## Parancssor
 
@@ -88,13 +100,13 @@ A kód a `LANTRANSFER_CODE` változóban is átadható. Az ablak nélküli fogad
 - Az első indításkor az alkalmazás egyszer engedélyt kér (UAC) két bejövő szabály hozzáadásához: `LAN Transfer 2 Discovery (UDP)` és `LAN Transfer 2 Transfer (TCP)`.
 - A szabályok csak a helyi alhálózatról (`remoteip=LocalSubnet`) és csak a Magánhálózat és Tartomány hálózati profilokon (`profile=private,domain`) fogadnak kapcsolatokat. Olyan hálózaton, amelyet a Windows Nyilvánosként jelöl meg (kávézó, szálloda, repülőtér), más számítógépek nem tudnak csatlakozni a LAN Transferhez.
 - Ha a fogadó nem látható az otthoni hálózaton, ellenőrizze, hogy a Windows hálózati beállításaiban a hálózat Magánhálózatként van-e beállítva.
-- Az 1-es verzió `LAN Transfer Discovery` és `LAN Transfer Transfer` nevű szabályokat hozott létre minden profilra, a Nyilvánost is beleértve. Ha a 2-es verzió megtalálja őket, egy sávban felajánlja a lecserélésüket. Semmi sem változik, amíg nem kattint a **Zaktualizuj reguły** (Szabályok frissítése) gombra, és nem erősíti meg a Windows kérdését.
+- Az 1-es verzió `LAN Transfer Discovery` és `LAN Transfer Transfer` nevű szabályokat hozott létre minden profilra, a Nyilvánost is beleértve. Ha a 2-es verzió megtalálja őket, egy sávban felajánlja a lecserélésüket. Semmi sem változik, amíg nem kattint a **Szabályok frissítése** gombra, és nem erősíti meg a Windows kérdését.
 
 ## Biztonsági megjegyzések
 
 - Az UDP-n keresztüli felderítés nincs hitelesítve; csupán tájékoztató jellegű. A bizalom alapja a párosítás: a kód és a rögzített tanúsítvány-ujjlenyomat.
 - Az első párosítás során egy ugyanazon a hálózaton lévő aktív támadó (man in the middle) kiadhatja magát a fogadónak. Párosítás előtt vesse össze a tanúsítvány ujjlenyomatát mindkét képernyőn.
-- Egy párosított küldő böngészheti a fogadó mappáit, és bármelyik ott létező mappába menthet fájlokat (egyéni cél beállítás). Csak megbízható számítógépeket párosítson, és az összes párosítás visszavonásához használja a **Nowy kod** gombot.
+- Egy párosított küldő böngészheti a fogadó mappáit, és bármelyik ott létező mappába menthet fájlokat (egyéni cél beállítás). Csak megbízható számítógépeket párosítson, és az összes párosítás visszavonásához használja az **Új kód** gombot.
 - A tűzfalszabályok nem nyitják meg a portokat a Nyilvánosként megjelölt hálózatokon.
 
 ## Környezeti változók
@@ -106,6 +118,7 @@ Ezek tesztekhez és automatizáláshoz készültek; normál használathoz egyikr
 | `LANTRANSFER_PORT`, `LANTRANSFER_UDP_PORT` | eltérő portok |
 | `LANTRANSFER_RECEIVE_DIR`, `LANTRANSFER_DATA_DIR` | fogadási mappa, a program adatmappája |
 | `LANTRANSFER_NAME` | a többiek számára megjelenített számítógépnév |
+| `LANTRANSFER_LANG` | a felület és a parancssor nyelve (`en`, `de`, `pl`, …); felülbírálja a mentett választást |
 | `LANTRANSFER_LOOPBACK=1` | csak 127.0.0.1: nincs broadcast, nincs LAN-pásztázás, nincsenek tűzfalszabályok |
 | `LANTRANSFER_PEER_UDP_PORTS` | más példányok UDP-portjai loopback módban |
 | `LANTRANSFER_NO_FIREWALL=1` | ne hozzon létre és ne ellenőrizzen tűzfalszabályokat |
@@ -118,11 +131,14 @@ Go 1.23 vagy újabb, Windows 10/11 rendszeren.
 ```powershell
 build.bat
 go test ./...
+python tools/check_i18n.py
 ```
 
-A `build.bat` lefuttatja a teszteket, és elkészíti a `LANTransfer.exe` (ablakos) és a `LANTransferCLI.exe` (konzolos) programot a `VERSION` fájlban megadott verzióval (alapértelmezés: `2.0.0`). A tesztek között 127.0.0.1-en keresztüli végpontok közötti átvitelek szerepelnek: párosítás és letiltás, elutasított hitelesítetlen kérések, 0 B és 96 MB közötti fájlok, Unicode mappák és 260 karakternél hosszabb elérési utak, névütközések, rosszindulatú nevek, hibás ellenőrzőösszeg, megszakítás és folytatás, megtelt lemez és tanúsítvány-rögzítés.
+A `build.bat` lefuttatja a teszteket, és elkészíti a `LANTransfer.exe` (ablakos) és a `LANTransferCLI.exe` (konzolos) programot a `VERSION` fájlban megadott verzióval (alapértelmezés: `2.1.0`). A tesztek között 127.0.0.1-en keresztüli végpontok közötti átvitelek szerepelnek: párosítás és letiltás, elutasított hitelesítetlen kérések, 0 B és 96 MB közötti fájlok, Unicode mappák és 260 karakternél hosszabb elérési utak, névütközések, rosszindulatú nevek, hibás ellenőrzőösszeg, megszakítás és folytatás, megtelt lemez és tanúsítvány-rögzítés.
 
-Kiadási megjegyzések: [docs/releases/v2.0.0.md](../docs/releases/v2.0.0.md).
+A fordítások a `locales/ui.<code>.json` fájlokban találhatók (a forrásnyelv a lengyel, a tartaléknyelv az angol). A `tools/check_i18n.py` ellenőrzi, hogy mind a 30 fájlban ugyanazok a kulcsok, helyőrzők és többes számú alakok szerepelnek-e, és nem maradt-e bennük lengyel szöveg; egy Go-teszt pedig azt ellenőrzi, hogy a program által használt minden kulcs minden nyelvben létezik-e.
+
+Kiadási megjegyzések: [docs/releases/v2.1.0.md](../docs/releases/v2.1.0.md) · [v2.0.0](../docs/releases/v2.0.0.md).
 
 ## Licenc
 
