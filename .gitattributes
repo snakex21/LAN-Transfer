@@ -1,0 +1,7 @@
+# Go sources stay LF on every OS (gofmt in CI on Windows runners with autocrlf).
+*.go text eol=lf
+go.mod text eol=lf
+go.sum text eol=lf
+*.syso binary
+*.ico binary
+*.png binary
