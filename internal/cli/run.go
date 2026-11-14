@@ -16,12 +16,15 @@ import (
 	"lantransfer/internal/app"
 	"lantransfer/internal/config"
 	"lantransfer/internal/discovery"
+	"lantransfer/internal/protocol"
 	"lantransfer/internal/security"
 	"lantransfer/internal/service"
 	"lantransfer/internal/transfer"
+	"lantransfer/internal/version"
 )
 
 const usage = `użycie:
+  LANTransferCLI.exe version
   LANTransferCLI.exe serve
   LANTransferCLI.exe devices
   LANTransferCLI.exe send <plik|folder>... --to <ip[:port]|nazwa> --code <kod> [--dest <folder>] [--parallel N] [--json]
@@ -56,6 +59,9 @@ func run(state *app.State, args []string, stdout, stderr io.Writer) error {
 		return encoder.Encode(devices)
 	case "send":
 		return send(state, args[1:], stdout, stderr)
+	case "version", "--version", "-v":
+		fmt.Fprintf(stdout, "LAN Transfer %s (protokół %d)\n", version.String(), protocol.Version)
+		return nil
 	case "help", "-h", "--help":
 		fmt.Fprintln(stdout, usage)
 		return nil

@@ -14,10 +14,12 @@ import (
 	"lantransfer/internal/discovery"
 	"lantransfer/internal/filebrowser"
 	"lantransfer/internal/model"
+	"lantransfer/internal/networksetup"
 	"lantransfer/internal/preview"
 	"lantransfer/internal/protocol"
 	"lantransfer/internal/security"
 	"lantransfer/internal/transfer"
+	"lantransfer/internal/version"
 )
 
 // result is the uniform shape every binding returns to JavaScript.
@@ -63,6 +65,8 @@ func (b *bridge) bindAll() error {
 		"transferState":    b.transferState,
 		"clearHistory":     b.clearHistory,
 		"openFolder":       b.openFolder,
+		"firewallStatus":   b.firewallStatus,
+		"updateFirewall":   b.updateFirewall,
 	}
 	for name, fn := range bindings {
 		if err := b.window.Bind(name, fn); err != nil {
@@ -77,7 +81,7 @@ func (b *bridge) appInfo() result {
 	return ok(result{
 		"id": s.ID, "name": s.Name, "receive_dir": s.ReceiveDir, "port": config.HTTPPort,
 		"protocol": protocol.Version, "fingerprint": security.ShortFingerprint(s.Identity.Fingerprint),
-		"pairing_code": s.Pairing.Code(),
+		"pairing_code": s.Pairing.Code(), "version": version.String(),
 	})
 }
 
@@ -225,6 +229,20 @@ func (b *bridge) openFolder(path string) result {
 	}
 	if err := exec.Command("explorer.exe", "/select,", path).Start(); err != nil {
 		return fail(err)
+	}
+	return ok(nil)
+}
+
+func (b *bridge) firewallStatus() result {
+	return ok(result{"firewall": networksetup.Status()})
+}
+
+// updateFirewall replaces the 1.x rules (all profiles) with the 2.x ones
+// (Private + Domain). Runs only when the user clicks the button in the banner;
+// Windows shows its own UAC prompt.
+func (b *bridge) updateFirewall() result {
+	if err := networksetup.UpdateLegacyRules(); err != nil {
+		return fail(fmt.Errorf("nie udało się uruchomić aktualizacji reguł zapory: %w", err))
 	}
 	return ok(nil)
 }

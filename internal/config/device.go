@@ -6,10 +6,16 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
+// HostName is the name this computer announces. LANTRANSFER_NAME overrides
+// the system host name (demos, screenshots, several instances on one PC).
 func HostName() (string, error) {
+	if name := strings.TrimSpace(os.Getenv("LANTRANSFER_NAME")); name != "" {
+		return name, nil
+	}
 	return os.Hostname()
 }
 

@@ -28,8 +28,10 @@ jobs:
       - name: build
         shell: bash
         run: |
-          go build -trimpath -ldflags="-s -w -H windowsgui" -o LANTransfer.exe .
-          go build -trimpath -ldflags="-s -w" -o LANTransferCLI.exe .
+          V="-X lantransfer/internal/version.Version=2.0.0-ci.${GITHUB_RUN_NUMBER}"
+          go build -trimpath -ldflags="-s -w $V -H windowsgui" -o LANTransfer.exe .
+          go build -trimpath -ldflags="-s -w $V" -o LANTransferCLI.exe .
+          ./LANTransferCLI.exe version
       - uses: actions/upload-artifact@v4
         with:
           name: lantransfer-windows
@@ -46,4 +48,4 @@ jobs:
         with:
           go-version-file: go.mod
       - run: go build ./...
-      - run: go test -count=1 ./internal/fsafe/ ./internal/security/ ./internal/service/ ./internal/cli/ ./internal/discovery/
+      - run: go test -count=1 ./internal/fsafe/ ./internal/security/ ./internal/service/ ./internal/cli/ ./internal/discovery/ ./internal/networksetup/

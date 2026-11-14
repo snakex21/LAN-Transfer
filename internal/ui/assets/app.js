@@ -79,6 +79,9 @@ async function loadInfo() {
   $('me').textContent = `${info.name} · odbiór na porcie ${info.port}`;
   $('me').title = `Folder odbioru: ${info.receive_dir}`;
   $('fingerprint').textContent = info.fingerprint;
+  $('appVersion').textContent = info.version;
+  $('appProtocol').textContent = info.protocol;
+  document.title = `LAN Transfer ${info.version}`;
   showCode(info.pairing_code);
 }
 
@@ -632,7 +635,21 @@ window.addEventListener('drop', event => {
   if (paths.length) window.__addDroppedPaths(paths);
 });
 
+// ---- firewall (1.x rules → 2.x rules, only on user action) --------------------
+async function checkFirewall() {
+  const r = await firewallStatus();
+  $('firewallBanner').classList.toggle('hidden', !(r.ok && r.firewall.legacy && !r.firewall.configured));
+}
+$('firewallLater').addEventListener('click', () => $('firewallBanner').classList.add('hidden'));
+$('firewallUpdate').addEventListener('click', async () => {
+  const r = await updateFirewall();
+  if (!r.ok) return toast(r.error, 'error');
+  toast('Potwierdź zmianę w oknie Windows (UAC). Reguły zapory zostaną zaktualizowane.');
+  setTimeout(checkFirewall, 8000);
+});
+
 loadInfo();
+checkFirewall();
 refreshDevices();
 renderSelection();
 updateSummary();

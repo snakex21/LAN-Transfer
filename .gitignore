@@ -1,5 +1,38 @@
+# build outputs
 *.exe
+*.exe~
 /build/
+/dist/
+/release/
+*.zip
+*.zip.sha256
+*.test
+*.out
+coverage.*
+
+# portable data folder next to the exe (history, window state) and test data
 /data/
-*.part
 /.lt-test/
+*.part
+.lantransfer-partial/
+LAN Transfer/
+
+# keys, certificates, pairing material, logs
+*.pem
+*.key
+*.crt
+*.cer
+*.p12
+*.pfx
+*.log
+*.err
+pairing*.txt
+window_state.json
+history.json
+
+# editors / OS
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+.DS_Store

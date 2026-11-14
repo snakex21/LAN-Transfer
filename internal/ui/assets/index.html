@@ -28,6 +28,15 @@
   </section>
 </header>
 
+<div id="firewallBanner" class="banner hidden" role="status">
+  <div><b>Znaleziono reguły zapory z LAN Transfer 1.x.</b>
+    <span class="muted">Otwierają porty także w profilu sieci <b>Publiczna</b>. Wersja 2 tworzy reguły tylko dla profili Prywatna i Domena (tylko lokalna podsieć). Nic nie zostanie zmienione bez Twojej zgody.</span></div>
+  <div class="banner-actions">
+    <button class="btn small" id="firewallUpdate">Zaktualizuj reguły</button>
+    <button class="btn ghost small" id="firewallLater">Nie teraz</button>
+  </div>
+</div>
+
 <main class="layout">
   <section class="card devices-card" aria-labelledby="devicesTitle">
     <div class="section-head">
@@ -126,6 +135,11 @@
     </div>
   </form>
 </dialog>
+
+<footer class="footer">
+  <span>LAN Transfer <b id="appVersion">—</b> · protokół <span id="appProtocol">—</span></span>
+  <span class="muted">MIT · <span id="repoLink">github.com/snakex21/LAN-Transfer</span></span>
+</footer>
 
 <div id="toasts" class="toasts" aria-live="assertive"></div>
 <script>//__SCRIPT__</script>

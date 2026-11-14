@@ -27,3 +27,13 @@ func TestParseSendForms(t *testing.T) {
 		t.Fatal("no paths accepted")
 	}
 }
+
+func TestVersionCommand(t *testing.T) {
+	var out strings.Builder
+	if err := run(nil, []string{"version"}, &out, &out); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.HasPrefix(out.String(), "LAN Transfer ") || !strings.Contains(out.String(), "protokół 2") {
+		t.Fatalf("unexpected version output: %q", out.String())
+	}
+}
