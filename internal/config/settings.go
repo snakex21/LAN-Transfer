@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // Settings are the user preferences kept in data/settings.json.
@@ -13,6 +14,22 @@ type Settings struct {
 	// LanguageSource is "manual" (picked by the user) or "auto" (follow the
 	// Windows display language on every start).
 	LanguageSource string `json:"language_source,omitempty"`
+	// RequireCode: senders must enter this computer's pairing code. nil
+	// (older settings files) means true. When false, any LAN Transfer
+	// sender on the network may send files and browse folders here.
+	RequireCode *bool `json:"require_code,omitempty"`
+}
+
+// CodeRequired reports the "Require pairing code" setting. The variable
+// LANTRANSFER_REQUIRE_CODE=0/1 overrides it (scripts, tests).
+func (s Settings) CodeRequired() bool {
+	switch strings.ToLower(strings.TrimSpace(os.Getenv("LANTRANSFER_REQUIRE_CODE"))) {
+	case "0", "false", "no", "off":
+		return false
+	case "1", "true", "yes", "on":
+		return true
+	}
+	return s.RequireCode == nil || *s.RequireCode
 }
 
 func settingsPath() (string, error) {

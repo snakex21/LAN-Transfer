@@ -27,6 +27,7 @@ Ein kleines portables Werkzeug, um Dateien und Ordner direkt zwischen zwei Compu
 
 - Automatische Erkennung anderer Computer, auf denen LAN Transfer läuft (UDP-Broadcast, als Fallback ein gedrosselter Scan des /24-Netzes).
 - Kopplung über einen 6-stelligen Code, der auf dem Empfänger angezeigt wird. Ohne Kopplung kann nichts gesendet und kein Ordner durchsucht werden.
+- Optionaler Modus ohne Code: Auf dem Empfänger **Kopplungscode verlangen** in den Einstellungen ausschalten (gespeichert in `data\settings.json`) oder `serve --no-code` starten. Dann kann jeder Computer mit LAN Transfer im Netzwerk ohne Code senden, weiterhin verschlüsselt; die Kopfzeile zeigt dabei **Ohne Code**.
 - TLS-1.3-Verschlüsselung. Jeder Start erzeugt ein neues selbstsigniertes Zertifikat; sein Fingerabdruck wird beim Koppeln festgelegt (Pinning) und bei jeder Verbindung geprüft.
 - Dateien und ganze Ordner, wobei die Ordnerstruktur erhalten bleibt und bis zu 4 Dateien parallel gesendet werden.
 - Fortsetzen unterbrochener Übertragungen und SHA-256-Prüfung jeder Datei.
@@ -108,6 +109,7 @@ Der Code kann auch über `LANTRANSFER_CODE` übergeben werden. Ein Empfänger oh
 - Bei der ersten Kopplung könnte sich ein aktiver Angreifer im selben Netzwerk (Man-in-the-Middle) als Empfänger ausgeben. Vergleichen Sie vor dem Koppeln den Zertifikat-Fingerabdruck auf beiden Bildschirmen.
 - Ein gekoppelter Sender kann die Ordner des Empfängers durchsuchen und Dateien in jeden dort vorhandenen Ordner speichern (Option für ein eigenes Ziel). Koppeln Sie nur Computer, denen Sie vertrauen, und verwenden Sie **Neuer Code**, um alle Kopplungen zu widerrufen.
 - Die Firewallregeln öffnen die Ports nicht in Netzwerken, die als öffentlich eingestuft sind.
+- Ist **Kopplungscode verlangen** aus, kann jeder im Netzwerk mit LAN Transfer ohne Code Dateien an diesen Computer senden und seine Ordner durchsuchen, wie in Version 1 (aber verschlüsselt). Nur in einem vertrauenswürdigen Netzwerk verwenden. Wird der Code wieder eingeschaltet, werden ohne Code verbundene Absender getrennt.
 
 ## Umgebungsvariablen
 
@@ -123,6 +125,7 @@ Diese sind für Tests und Automatisierung gedacht; im normalen Betrieb wird kein
 | `LANTRANSFER_PEER_UDP_PORTS` | UDP-Ports anderer Instanzen im Loopback-Modus |
 | `LANTRANSFER_NO_FIREWALL=1` | keine Firewallregeln anlegen oder prüfen |
 | `LANTRANSFER_PIN`, `LANTRANSFER_CODE` | fester Code des Empfängers, vom Sender verwendeter Code |
+| `LANTRANSFER_REQUIRE_CODE=0` | `0` = dieser Empfänger braucht keinen Kopplungscode, `1` = Code erforderlich; hat Vorrang vor der Einstellung |
 
 ## Build und Tests
 

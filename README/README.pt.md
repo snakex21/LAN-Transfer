@@ -27,6 +27,7 @@ Uma pequena ferramenta portátil para enviar arquivos e pastas diretamente entre
 
 - Descoberta automática de outros computadores que executam o LAN Transfer (broadcast UDP, com uma varredura limitada da rede /24 como alternativa).
 - Emparelhamento com um código de 6 dígitos exibido no receptor. Sem emparelhamento, nada pode ser enviado e nenhuma pasta pode ser navegada.
+- Modo opcional sem código: no recetor, desative **Exigir código de emparelhamento** nas Definições (guardado em `data\settings.json`) ou inicie `serve --no-code`. Assim qualquer computador com o LAN Transfer na rede pode enviar-lhe ficheiros sem código, sempre cifrados; entretanto o cabeçalho mostra **Sem código**.
 - Criptografia TLS 1.3. Cada execução cria um novo certificado autoassinado; sua impressão digital é fixada durante o emparelhamento e verificada em cada conexão.
 - Arquivos e pastas inteiras, com a estrutura de pastas preservada e até 4 arquivos enviados em paralelo.
 - Retomada de transferências interrompidas e verificação SHA-256 de cada arquivo.
@@ -108,6 +109,7 @@ O código também pode ser passado em `LANTRANSFER_CODE`. Um receptor sem janela
 - Durante o primeiro emparelhamento, um atacante ativo na mesma rede (man in the middle) poderia se passar pelo receptor. Compare a impressão digital do certificado em ambas as telas antes de emparelhar.
 - Um remetente emparelhado pode navegar pelas pastas do receptor e salvar arquivos em qualquer pasta existente nele (a opção de destino personalizado). Emparelhe apenas computadores em que você confia e use **Novo código** para revogar todos os emparelhamentos.
 - As regras de firewall não abrem as portas em redes marcadas como Públicas.
+- Com **Exigir código de emparelhamento** desativado, qualquer pessoa na rede que use o LAN Transfer pode enviar ficheiros para este computador e explorar as suas pastas sem código, como na versão 1 (mas cifrado). Use-o apenas numa rede de confiança. Voltar a ativar o código desliga os remetentes ligados sem ele.
 
 ## Variáveis de ambiente
 
@@ -123,6 +125,7 @@ Destinam-se a testes e automação; o uso normal não requer nenhuma delas.
 | `LANTRANSFER_PEER_UDP_PORTS` | portas UDP de outras instâncias no modo loopback |
 | `LANTRANSFER_NO_FIREWALL=1` | não criar nem verificar regras de firewall |
 | `LANTRANSFER_PIN`, `LANTRANSFER_CODE` | código fixo do receptor, código usado pelo remetente |
+| `LANTRANSFER_REQUIRE_CODE=0` | `0` = este recetor não exige código de emparelhamento, `1` = código obrigatório; prevalece sobre a definição |
 
 ## Compilação e testes
 

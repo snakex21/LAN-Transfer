@@ -27,6 +27,7 @@ Kis méretű, hordozható eszköz fájlok és mappák közvetlen küldésére k�
 
 - A LAN Transfert futtató többi számítógép automatikus felderítése (UDP broadcast, tartalékként lassított /24-es pásztázással).
 - Párosítás a fogadón megjelenő 6 jegyű kóddal. Párosítás nélkül semmit sem lehet küldeni, és mappákat sem lehet böngészni.
+- Választható kód nélküli mód: a fogadón kapcsolja ki a Beállításokban a(z) **Párosítási kód megkövetelése** lehetőséget (a `data\settings.json` fájlba mentődik), vagy indítsa a `serve --no-code` paranccsal. Ekkor a hálózat bármely LAN Transfer-t futtató gépe kód nélkül küldhet neki, továbbra is titkosítva; közben a fejlécben **Kód nélkül** jelzés látható.
 - TLS 1.3 titkosítás. Minden indításkor új, önaláírt tanúsítvány jön létre; ennek ujjlenyomatát a párosítás rögzíti, és minden kapcsolatnál ellenőrzi.
 - Fájlok és teljes mappák a mappaszerkezet megőrzésével, egyszerre legfeljebb 4 fájl párhuzamos küldésével.
 - A megszakadt átvitelek folytatása és minden fájl SHA-256 ellenőrzése.
@@ -108,6 +109,7 @@ A kód a `LANTRANSFER_CODE` változóban is átadható. Az ablak nélküli fogad
 - Az első párosítás során egy ugyanazon a hálózaton lévő aktív támadó (man in the middle) kiadhatja magát a fogadónak. Párosítás előtt vesse össze a tanúsítvány ujjlenyomatát mindkét képernyőn.
 - Egy párosított küldő böngészheti a fogadó mappáit, és bármelyik ott létező mappába menthet fájlokat (egyéni cél beállítás). Csak megbízható számítógépeket párosítson, és az összes párosítás visszavonásához használja az **Új kód** gombot.
 - A tűzfalszabályok nem nyitják meg a portokat a Nyilvánosként megjelölt hálózatokon.
+- Ha a(z) **Párosítási kód megkövetelése** ki van kapcsolva, a hálózaton bárki, aki LAN Transfer-t futtat, kód nélkül küldhet fájlokat erre a gépre és böngészheti a mappáit, mint az 1-es verzióban (de titkosítva). Csak megbízható hálózaton használja. A kód visszakapcsolása bontja a kód nélkül csatlakozott küldőket.
 
 ## Környezeti változók
 
@@ -123,6 +125,7 @@ Ezek tesztekhez és automatizáláshoz készültek; normál használathoz egyikr
 | `LANTRANSFER_PEER_UDP_PORTS` | más példányok UDP-portjai loopback módban |
 | `LANTRANSFER_NO_FIREWALL=1` | ne hozzon létre és ne ellenőrizzen tűzfalszabályokat |
 | `LANTRANSFER_PIN`, `LANTRANSFER_CODE` | a fogadó rögzített kódja, a küldő által használt kód |
+| `LANTRANSFER_REQUIRE_CODE=0` | `0` = ez a fogadó nem kér párosítási kódot, `1` = kód szükséges; felülírja a beállítást |
 
 ## Fordítás és tesztek
 

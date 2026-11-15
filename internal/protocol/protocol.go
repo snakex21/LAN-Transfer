@@ -3,7 +3,8 @@
 // Version 2 runs over HTTPS (self-signed certificate pinned at pairing):
 //
 //	GET  /api/info                         public: name, id, protocol, fingerprint
-//	POST /api/pair      {code,id,name}     → {token}
+//	POST /api/pair      {code,id,name}     → {token}; an empty code is enough
+//	                                       when the receiver switched the code off
 //	GET  /api/browse?path=                 folders on the receiver (paired only)
 //	GET  /api/v2/offset?<file params>      → {offset, done} for resuming
 //	POST /api/v2/upload?<file params>      raw file bytes from `offset`, SHA-256
@@ -35,6 +36,9 @@ type Info struct {
 	Port        int    `json:"port"`
 	Protocol    int    `json:"protocol"`
 	Fingerprint string `json:"fingerprint"`
+	// NoCode: the receiver accepts senders without the pairing code (2.2+).
+	// Only a hint for the UI; the receiver decides at /api/pair.
+	NoCode bool `json:"no_code,omitempty"`
 }
 
 type PairRequest struct {
@@ -75,4 +79,5 @@ const (
 	CodeBadName      = "bad_name"
 	CodeOffset       = "offset_mismatch"
 	CodeTooLarge     = "too_large"
+	CodeCodeRequired = "code_required"
 )

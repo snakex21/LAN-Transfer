@@ -27,6 +27,7 @@ Et lite, portabelt verktøy for å sende filer og mapper direkte mellom to datam
 
 - Automatisk oppdagelse av andre datamaskiner som kjører LAN Transfer (UDP-kringkasting, med en begrenset /24-skanning som reserve).
 - Paring med en 6-sifret kode som vises på mottakeren. Uten paring kan ingenting sendes, og ingen mapper kan blas gjennom.
+- Valgfri modus uten kode: slå av **Krev paringskode** i Innstillinger på mottakeren (lagres i `data\settings.json`) eller start `serve --no-code`. Da kan alle datamaskiner med LAN Transfer i nettverket sende dit uten kode, fortsatt kryptert; overskriften viser da **Uten kode**.
 - TLS 1.3-kryptering. Hver kjøring oppretter et nytt selvsignert sertifikat; fingeravtrykket festes (pinning) under paringen og kontrolleres ved hver tilkobling.
 - Filer og hele mapper, med mappestrukturen bevart og opptil 4 filer sendt parallelt.
 - Gjenopptakelse av avbrutte overføringer og SHA-256-kontroll av hver fil.
@@ -108,6 +109,7 @@ Koden kan også oppgis i `LANTRANSFER_CODE`. En mottaker uten vindu kan bruke en
 - Under den første paringen kan en aktiv angriper på samme nettverk (man-in-the-middle) utgi seg for å være mottakeren. Sammenlign sertifikatets fingeravtrykk på begge skjermene før du parer.
 - En paret avsender kan bla gjennom mottakerens mapper og lagre filer i hvilken som helst eksisterende mappe der (alternativet for egendefinert mål). Par bare datamaskiner du stoler på, og bruk **Ny kode** for å tilbakekalle alle paringer.
 - Brannmurreglene åpner ikke portene på nettverk som er merket som Offentlig.
+- Når **Krev paringskode** er slått av, kan alle i nettverket som bruker LAN Transfer sende filer til denne datamaskinen og bla i mappene uten kode, som i versjon 1 (men kryptert). Bruk det bare i et nettverk du stoler på. Når koden slås på igjen, kobles avsendere uten kode fra.
 
 ## Miljøvariabler
 
@@ -123,6 +125,7 @@ Disse er ment for testing og automatisering; normal bruk krever ingen av dem.
 | `LANTRANSFER_PEER_UDP_PORTS` | UDP-porter for andre instanser i loopback-modus |
 | `LANTRANSFER_NO_FIREWALL=1` | ikke opprett eller kontroller brannmurregler |
 | `LANTRANSFER_PIN`, `LANTRANSFER_CODE` | fast kode for mottakeren, kode som brukes av avsenderen |
+| `LANTRANSFER_REQUIRE_CODE=0` | `0` = denne mottakeren krever ingen paringskode, `1` = kode kreves; går foran innstillingen |
 
 ## Bygging og tester
 

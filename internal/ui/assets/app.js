@@ -87,6 +87,7 @@ async function loadInfo() {
   state.info = await appInfo();
   renderInfo();
   showCode(state.info.pairing_code);
+  showRequireCode(state.info.require_code);
 }
 
 function renderInfo() {
@@ -102,6 +103,15 @@ function renderInfo() {
 
 function showCode(code) {
   $('pairingCode').textContent = code ? `${code.slice(0, 3)} ${code.slice(3)}` : '––– –––';
+}
+
+// showRequireCode reflects the "Require pairing code" setting: a warning
+// badge in the header while anyone on the network may send without a code.
+function showRequireCode(required) {
+  if (typeof required !== 'boolean') return;
+  if (state.info) state.info.require_code = required;
+  $('noCodeBadge').classList.toggle('hidden', required);
+  $('requireCode').checked = required;
 }
 
 // ---- devices -------------------------------------------------------------
@@ -155,6 +165,7 @@ function renderDevices() {
     let badge;
     if (!compatible) badge = el('span', 'badge warn', t('devices.badgeOld'));
     else if (device.paired) badge = el('span', 'badge ok', t('devices.badgePaired'));
+    else if (device.no_code) badge = el('span', 'badge', t('devices.badgeNoCode'));
     else badge = el('span', 'badge', t('devices.badgeNeedsCode'));
     button.append(el('span', 'device-icon', '🖥'), main, badge);
     button.addEventListener('click', () => {
@@ -168,11 +179,45 @@ function renderDevices() {
   }));
 }
 
+// connectWithoutCode tries to pair with an empty code. It succeeds when the
+// receiver switched its code off; "code required" is not counted as a wrong
+// code there. Returns true (connected), false (a code is needed) or throws.
+async function connectWithoutCode(device) {
+  const result = await pairDevice(device.address, '');
+  if (!result.ok) {
+    if (result.code_required) return false;
+    throw new BackendError(result);
+  }
+  if (device.short_fingerprint && result.fingerprint !== device.short_fingerprint) {
+    toast(t('pair.fingerprintMismatch', { actual: result.fingerprint, announced: device.short_fingerprint }), 'error');
+  } else {
+    toast(t('pair.connectedNoCode', { peer: result.peer, fingerprint: result.fingerprint }), 'success');
+  }
+  return true;
+}
+
 async function selectDevice(device) {
   if (device.paired) {
     state.target = device;
     onTargetChanged();
     return;
+  }
+  // Receivers that announce "no code", and manual addresses (unknown), are
+  // tried without a code first; the code dialog opens only when needed.
+  if (device.no_code || !device.short_fingerprint) {
+    try {
+      if (await connectWithoutCode(device)) {
+        state.target = { ...device, paired: true };
+        onTargetChanged();
+        refreshDevices();
+        return;
+      }
+    } catch (error) {
+      if (device.short_fingerprint) {
+        toast(describe(error), 'error');
+        return;
+      }
+    }
   }
   const paired = await askForPairing(device);
   if (!paired) return;
@@ -679,6 +724,7 @@ async function pollTransfers() {
       renderHistory();
     }
     showCode(result.pairing_code);
+    showRequireCode(result.require_code);
   } finally {
     polling = false;
   }
@@ -771,6 +817,20 @@ $('openSettings').addEventListener('click', () => {
   $('languageSelect').focus();
 });
 $('languageSelect').addEventListener('change', changeLanguage);
+$('requireCode').addEventListener('change', async () => {
+  const box = $('requireCode');
+  box.disabled = true;
+  try {
+    const result = await setRequireCode(box.checked);
+    if (!result.ok) throw new BackendError(result);
+    showRequireCode(result.require_code);
+  } catch (error) {
+    toast(describe(error), 'error');
+    showRequireCode(!box.checked);
+  } finally {
+    box.disabled = false;
+  }
+});
 
 const dropZone = $('dropZone');
 window.addEventListener('dragover', event => { event.preventDefault(); dropZone.classList.add('drag-active'); });

@@ -27,6 +27,7 @@ Een kleine, draagbare tool om bestanden en mappen rechtstreeks tussen twee compu
 
 - Automatische detectie van andere computers waarop LAN Transfer draait (UDP-broadcast, met een gedoseerde /24-scan als terugvaloptie).
 - Koppelen met een 6-cijferige code die op de ontvanger wordt getoond. Zonder koppeling kan er niets worden verzonden en kunnen er geen mappen worden doorzocht.
+- Optionele modus zonder code: zet op de ontvanger **Koppelingscode vereisen** uit in Instellingen (opgeslagen in `data\settings.json`) of start `serve --no-code`. Dan kan elke computer met LAN Transfer in het netwerk er zonder code naartoe sturen, nog steeds versleuteld; de kopregel toont dan **Zonder code**.
 - TLS 1.3-versleuteling. Bij elke start wordt een nieuw zelfondertekend certificaat aangemaakt; de vingerafdruk ervan wordt tijdens het koppelen vastgelegd (pinning) en bij elke verbinding gecontroleerd.
 - Bestanden en complete mappen, met behoud van de mapstructuur en tot 4 bestanden tegelijk.
 - Hervatten van onderbroken overdrachten en een SHA-256-controle van elk bestand.
@@ -108,6 +109,7 @@ De code kan ook worden doorgegeven via `LANTRANSFER_CODE`. Een ontvanger zonder 
 - Tijdens de eerste koppeling kan een actieve aanvaller in hetzelfde netwerk (man-in-the-middle) zich voordoen als de ontvanger. Vergelijk vóór het koppelen de vingerafdruk van het certificaat op beide schermen.
 - Een gekoppelde afzender kan door de mappen van de ontvanger bladeren en bestanden opslaan in elke bestaande map daar (de optie voor een aangepaste bestemming). Koppel alleen computers die je vertrouwt en gebruik **Nieuwe code** om alle koppelingen in te trekken.
 - De firewallregels openen de poorten niet op netwerken die als Openbaar zijn gemarkeerd.
+- Met **Koppelingscode vereisen** uit kan iedereen in het netwerk die LAN Transfer gebruikt zonder code bestanden naar deze computer sturen en de mappen doorbladeren, zoals in versie 1 (maar versleuteld). Gebruik dit alleen in een netwerk dat je vertrouwt. De code weer aanzetten verbreekt afzenders die zonder code verbonden zijn.
 
 ## Omgevingsvariabelen
 
@@ -123,6 +125,7 @@ Deze zijn bedoeld voor tests en automatisering; bij normaal gebruik is geen erva
 | `LANTRANSFER_PEER_UDP_PORTS` | UDP-poorten van andere instanties in loopbackmodus |
 | `LANTRANSFER_NO_FIREWALL=1` | firewallregels niet aanmaken of controleren |
 | `LANTRANSFER_PIN`, `LANTRANSFER_CODE` | vaste code van de ontvanger, code die de afzender gebruikt |
+| `LANTRANSFER_REQUIRE_CODE=0` | `0` = deze ontvanger vraagt geen koppelingscode, `1` = code vereist; gaat voor de instelling |
 
 ## Bouwen en tests
 

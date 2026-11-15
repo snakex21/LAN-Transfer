@@ -16,6 +16,7 @@ type Device struct {
 	Port        int       `json:"port"`
 	Protocol    int       `json:"protocol"`
 	Fingerprint string    `json:"fingerprint,omitempty"`
+	NoCode      bool      `json:"no_code,omitempty"` // receiver needs no pairing code
 	LastSeen    time.Time `json:"last_seen"`
 }
 

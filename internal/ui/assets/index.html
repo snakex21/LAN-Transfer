@@ -20,7 +20,8 @@
   <div class="topbar-end">
     <section class="receive-box" aria-labelledby="receiveTitle">
       <div class="receive-main">
-        <div class="label" id="receiveTitle" data-i18n="receive.title"></div>
+        <div class="label"><span id="receiveTitle" data-i18n="receive.title"></span>
+          <span class="badge warn hidden" id="noCodeBadge" data-i18n="receive.noCodeBadge" data-i18n-title="receive.noCodeHint"></span></div>
         <div class="code" id="pairingCode" dir="ltr" aria-live="polite">––– –––</div>
         <div class="muted small"><span data-i18n="receive.fingerprint"></span> <b id="fingerprint" dir="ltr">—</b></div>
       </div>
@@ -146,6 +147,8 @@
     <label class="field" for="languageSelect" data-i18n="settings.language"></label>
     <select id="languageSelect"></select>
     <p class="muted small field-hint" id="languageHint"></p>
+    <label class="check field-check"><input type="checkbox" id="requireCode"><span data-i18n="settings.requireCode"></span></label>
+    <p class="muted small field-hint" data-i18n="settings.requireCodeHint"></p>
     <div class="dialog-actions">
       <button class="btn" type="submit" id="settingsClose" data-i18n="common.close"></button>
     </div>

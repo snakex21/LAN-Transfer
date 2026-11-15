@@ -27,6 +27,7 @@ Una pequeña herramienta portátil para enviar archivos y carpetas directamente 
 
 - Detección automática de otros equipos que ejecutan LAN Transfer (difusión UDP, con un escaneo limitado de la red /24 como alternativa).
 - Emparejamiento con un código de 6 dígitos que se muestra en el receptor. Sin emparejamiento no se puede enviar nada ni explorar carpetas.
+- Modo opcional sin código: en el receptor, desactiva **Exigir código de emparejamiento** en Configuración (se guarda en `data\settings.json`) o inicia `serve --no-code`. Así cualquier equipo con LAN Transfer en la red puede enviarle archivos sin código, siempre cifrados; mientras tanto el encabezado muestra **Sin código**.
 - Cifrado TLS 1.3. Cada ejecución crea un nuevo certificado autofirmado; su huella digital se fija durante el emparejamiento y se comprueba en cada conexión.
 - Archivos y carpetas completas, conservando la estructura de carpetas y enviando hasta 4 archivos en paralelo.
 - Reanudación de transferencias interrumpidas y verificación SHA-256 de cada archivo.
@@ -108,6 +109,7 @@ El código también se puede pasar en `LANTRANSFER_CODE`. Un receptor sin ventan
 - Durante el primer emparejamiento, un atacante activo en la misma red (ataque de intermediario, man in the middle) podría hacerse pasar por el receptor. Compara la huella digital del certificado en ambas pantallas antes de emparejar.
 - Un emisor emparejado puede explorar las carpetas del receptor y guardar archivos en cualquier carpeta existente en él (la opción de destino personalizado). Empareja solo equipos de confianza y usa **Nuevo código** para revocar todos los emparejamientos.
 - Las reglas de cortafuegos no abren los puertos en redes marcadas como Públicas.
+- Con **Exigir código de emparejamiento** desactivado, cualquier persona de la red que use LAN Transfer puede enviar archivos a este equipo y explorar sus carpetas sin código, como en la versión 1 (pero cifrado). Úsalo solo en una red de confianza. Al volver a activar el código se desconectan los remitentes conectados sin él.
 
 ## Variables de entorno
 
@@ -123,6 +125,7 @@ Están pensadas para pruebas y automatización; el uso normal no requiere ningun
 | `LANTRANSFER_PEER_UDP_PORTS` | puertos UDP de otras instancias en modo loopback |
 | `LANTRANSFER_NO_FIREWALL=1` | no crear ni comprobar reglas de cortafuegos |
 | `LANTRANSFER_PIN`, `LANTRANSFER_CODE` | código fijo del receptor, código que usa el emisor |
+| `LANTRANSFER_REQUIRE_CODE=0` | `0` = este receptor no exige código de emparejamiento, `1` = código obligatorio; tiene prioridad sobre la configuración |
 
 ## Compilación y pruebas
 

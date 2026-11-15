@@ -27,6 +27,7 @@ Alat mudah alih yang kecil untuk menghantar fail dan folder secara terus antara 
 
 - Penemuan automatik komputer lain yang menjalankan LAN Transfer (UDP broadcast, dengan imbasan /24 yang dihadkan kelajuannya sebagai sandaran).
 - Penggandingan dengan kod 6 digit yang dipaparkan pada penerima. Tanpa penggandingan, tiada apa-apa boleh dihantar dan tiada folder boleh disemak imbas.
+- Mod pilihan tanpa kod: pada penerima, matikan **Wajibkan kod gandingan** dalam Tetapan (disimpan dalam `data\settings.json`) atau mulakan `serve --no-code`. Kemudian mana-mana komputer dengan LAN Transfer dalam rangkaian boleh menghantar kepadanya tanpa kod, tetap disulitkan; sementara itu pengepala menunjukkan **Tanpa kod**.
 - Penyulitan TLS 1.3. Setiap kali dijalankan, sijil tandatangan sendiri (self-signed) yang baharu dicipta; cap jarinya disematkan (pinned) semasa penggandingan dan disemak pada setiap sambungan.
 - Fail dan keseluruhan folder, dengan struktur folder dikekalkan dan sehingga 4 fail dihantar secara selari.
 - Penyambungan semula pemindahan yang terganggu dan semakan SHA-256 bagi setiap fail.
@@ -108,6 +109,7 @@ Kod juga boleh dihantar melalui `LANTRANSFER_CODE`. Penerima tanpa tetingkap bol
 - Semasa penggandingan pertama, penyerang aktif dalam rangkaian yang sama (man in the middle) boleh menyamar sebagai penerima. Bandingkan cap jari sijil pada kedua-dua skrin sebelum menggandingkan.
 - Penghantar yang telah digandingkan boleh menyemak imbas folder penerima dan menyimpan fail ke dalam mana-mana folder sedia ada di sana (pilihan destinasi tersuai). Gandingkan hanya komputer yang anda percayai, dan gunakan **Kod baharu** untuk membatalkan semua penggandingan.
 - Peraturan tembok api tidak membuka port pada rangkaian yang ditandakan sebagai Awam.
+- Apabila **Wajibkan kod gandingan** dimatikan, sesiapa dalam rangkaian yang menjalankan LAN Transfer boleh menghantar fail ke komputer ini dan menyemak imbas foldernya tanpa kod, seperti dalam versi 1 (tetapi disulitkan). Gunakan hanya dalam rangkaian yang dipercayai. Menghidupkan semula kod memutuskan penghantar yang bersambung tanpanya.
 
 ## Pemboleh ubah persekitaran
 
@@ -123,6 +125,7 @@ Ini bertujuan untuk ujian dan automasi; penggunaan biasa tidak memerlukan mana-m
 | `LANTRANSFER_PEER_UDP_PORTS` | port UDP bagi tika lain dalam mod loopback |
 | `LANTRANSFER_NO_FIREWALL=1` | jangan cipta atau semak peraturan tembok api |
 | `LANTRANSFER_PIN`, `LANTRANSFER_CODE` | kod tetap penerima, kod yang digunakan oleh penghantar |
+| `LANTRANSFER_REQUIRE_CODE=0` | `0` = penerima ini tidak memerlukan kod gandingan, `1` = kod diperlukan; mengatasi tetapan |
 
 ## Binaan dan ujian
 

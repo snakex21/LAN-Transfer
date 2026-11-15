@@ -43,6 +43,9 @@ func fail(err error) result {
 	if errors.Is(err, transfer.ErrNotPaired) {
 		r["need_pairing"] = true
 	}
+	if transfer.IsCodeRequired(err) {
+		r["code_required"] = true
+	}
 	return r
 }
 
@@ -72,6 +75,7 @@ func (b *bridge) bindAll() error {
 		"firewallStatus":   b.firewallStatus,
 		"updateFirewall":   b.updateFirewall,
 		"setLanguage":      b.setLanguage,
+		"setRequireCode":   b.setRequireCode,
 	}
 	for name, fn := range bindings {
 		if err := b.window.Bind(name, fn); err != nil {
@@ -87,6 +91,7 @@ func (b *bridge) appInfo() result {
 		"id": s.ID, "name": s.Name, "receive_dir": s.ReceiveDir, "port": config.HTTPPort,
 		"protocol": protocol.Version, "fingerprint": security.ShortFingerprint(s.Identity.Fingerprint),
 		"pairing_code": s.Pairing.Code(), "version": version.String(),
+		"require_code": s.Pairing.CodeRequired(),
 	})
 }
 
@@ -148,6 +153,15 @@ func (b *bridge) pairDevice(address, code string) result {
 		return fail(err)
 	}
 	return ok(result{"peer": session.PeerName, "fingerprint": security.ShortFingerprint(session.Fingerprint)})
+}
+
+// setRequireCode saves the "Require pairing code" setting. Off: any LAN
+// Transfer sender on the network may send here without a code.
+func (b *bridge) setRequireCode(required bool) result {
+	if err := b.state.SetCodeRequired(required); err != nil {
+		return fail(i18n.Wrap(err, "err.saveSettings", "error", err))
+	}
+	return ok(result{"require_code": b.state.Pairing.CodeRequired()})
 }
 
 func (b *bridge) newPairingCode() result {
@@ -227,6 +241,7 @@ func (b *bridge) transferState() result {
 		"incoming":     b.state.Incoming.Snapshot(),
 		"history":      b.state.History.Entries(),
 		"pairing_code": b.state.Pairing.Code(),
+		"require_code": b.state.Pairing.CodeRequired(),
 		"peers":        len(b.state.Pairing.Peers()),
 	})
 }

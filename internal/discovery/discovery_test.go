@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"lantransfer/internal/model"
+	"lantransfer/internal/protocol"
 )
 
 func TestParseAnnouncementValidates(t *testing.T) {
@@ -46,5 +47,24 @@ func TestBroadcastAddressesIncludeLimitedBroadcast(t *testing.T) {
 	addrs := broadcastAddresses()
 	if len(addrs) == 0 || !addrs[0].Equal(net.IPv4bcast) {
 		t.Fatalf("got %v", addrs)
+	}
+}
+
+func TestNoCodeFlagIsAnnouncedAndParsed(t *testing.T) {
+	info := protocol.Info{ID: "abc", Name: "Laptop", Port: 45455, Protocol: 2, Fingerprint: "ff"}
+	r := Responder{Info: func() protocol.Info { return info }}
+	device, ok := parseAnnouncement(r.payload(), net.IPv4(10, 1, 2, 3), "self")
+	if !ok || device.NoCode {
+		t.Fatalf("code required: got %+v %v", device, ok)
+	}
+	info.NoCode = true // the setting changed: the next announcement says so
+	device, ok = parseAnnouncement(r.payload(), net.IPv4(10, 1, 2, 3), "self")
+	if !ok || !device.NoCode {
+		t.Fatalf("code off: got %+v %v", device, ok)
+	}
+	// Older (2.1) announcements have no flag: a code is required.
+	device, _ = parseAnnouncement([]byte(`{"id":"x","name":"Old","port":45455,"protocol":2}`), net.IPv4(10, 1, 2, 4), "self")
+	if device.NoCode {
+		t.Fatal("missing flag must mean a code is required")
 	}
 }

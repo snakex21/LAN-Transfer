@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"errors"
 	"reflect"
 	"strings"
 	"testing"
@@ -19,9 +18,10 @@ func TestParseSendForms(t *testing.T) {
 	if err != nil || opts.target != "LAPTOP" || opts.dest != `D:\Odbior` || len(opts.paths) != 1 {
 		t.Fatalf("legacy form: %+v %v", opts, err)
 	}
-	var e *i18n.Error
-	if _, err := parseSend([]string{"a", "b"}); !errors.As(err, &e) || e.Key != "cli.noCode" {
-		t.Fatalf("missing code not reported: %v", err)
+	// No code is accepted here: the receiver may have the code switched off
+	// (send reports cli.noCode when it is required, see TestCLISendWithoutCode).
+	if opts, err := parseSend([]string{"a", "b"}); err != nil || opts.code != "" {
+		t.Fatalf("missing code: %+v %v", opts, err)
 	}
 	t.Setenv("LANTRANSFER_CODE", "999999")
 	if opts, err := parseSend([]string{"a", "b"}); err != nil || opts.code != "999999" {

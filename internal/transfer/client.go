@@ -47,6 +47,8 @@ func (e *RemoteError) Message() i18n.Msg {
 		return i18n.M("err.wrongCode")
 	case e.Code == "locked":
 		return i18n.M("err.locked")
+	case e.Code == protocol.CodeCodeRequired:
+		return i18n.M("err.codeRequired")
 	case e.Code == protocol.CodeChecksum:
 		return i18n.M("err.checksum")
 	case e.Msg == "":
@@ -223,6 +225,13 @@ func decodeResponse(resp *http.Response, out any) error {
 		return nil
 	}
 	return json.NewDecoder(io.LimitReader(resp.Body, 16<<20)).Decode(out)
+}
+
+// IsCodeRequired reports a receiver that requires the pairing code (the
+// sender tried without one).
+func IsCodeRequired(err error) bool {
+	var remote *RemoteError
+	return errors.As(err, &remote) && remote.Code == protocol.CodeCodeRequired
 }
 
 // wrapConnError turns low-level failures into messages people understand.

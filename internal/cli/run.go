@@ -47,10 +47,20 @@ func run(state *app.State, args []string, stdout, stderr io.Writer) error {
 	}
 	switch args[0] {
 	case "serve":
+		noCode, err := parseServe(args[1:])
+		if err != nil {
+			return err
+		}
+		if noCode {
+			state.Pairing.SetCodeRequired(false) // this run only, not saved
+		}
 		fmt.Fprintln(stderr, t("cli.serving", "name", state.Name, "port", fmt.Sprint(config.HTTPPort)))
 		fmt.Fprintln(stderr, t("cli.receiveDir", "path", state.ReceiveDir))
 		fmt.Fprintln(stderr, t("cli.fingerprint", "fingerprint", security.ShortFingerprint(state.Identity.Fingerprint)))
 		fmt.Fprintln(stderr, t("cli.pairingCode", "code", state.Pairing.Code()))
+		if !state.Pairing.CodeRequired() {
+			fmt.Fprintln(stderr, t("cli.noCodeMode"))
+		}
 		return service.Run(state)
 	case "devices":
 		devices, err := discovery.Discover(1200*time.Millisecond, state.ID)
@@ -71,6 +81,22 @@ func run(state *app.State, args []string, stdout, stderr io.Writer) error {
 	default:
 		return usageError(i18n.New("cli.unknownCommand", "command", args[0]))
 	}
+}
+
+// parseServe reads the flags of "serve": --no-code accepts senders without
+// the pairing code for this run (the window setting is saved in
+// data/settings.json; LANTRANSFER_REQUIRE_CODE=0 does the same).
+func parseServe(args []string) (noCode bool, err error) {
+	fs := flag.NewFlagSet("serve", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	fs.BoolVar(&noCode, "no-code", false, "")
+	if err := fs.Parse(args); err != nil {
+		return false, usageError(err)
+	}
+	if fs.NArg() > 0 {
+		return false, errors.New(usage())
+	}
+	return noCode, nil
 }
 
 type sendOptions struct {
@@ -119,9 +145,9 @@ func parseSend(args []string) (sendOptions, error) {
 	if len(opts.paths) == 0 {
 		return opts, usageError(i18n.New("cli.noFiles"))
 	}
-	if strings.TrimSpace(opts.code) == "" {
-		return opts, i18n.New("cli.noCode")
-	}
+	// No code is fine when the receiver switched the code off; send reports
+	// cli.noCode when it turns out to be required.
+	opts.code = strings.TrimSpace(opts.code)
 	return opts, nil
 }
 
@@ -139,6 +165,9 @@ func send(state *app.State, args []string, stdout, stderr io.Writer) error {
 
 	session, err := transfer.Pair(ctx, address, opts.code, state.Info())
 	if err != nil {
+		if opts.code == "" && transfer.IsCodeRequired(err) {
+			return i18n.New("cli.noCode")
+		}
 		return err
 	}
 	defer session.Close()

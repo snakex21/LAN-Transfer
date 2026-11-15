@@ -77,3 +77,47 @@ func TestIdentityFingerprintPinning(t *testing.T) {
 		t.Fatalf("ShortFingerprint = %q", got)
 	}
 }
+
+func TestCodeOffIssuesTokensWithoutCode(t *testing.T) {
+	p := NewPairing("")
+	if !p.CodeRequired() {
+		t.Fatal("the code must be required by default")
+	}
+	// Without a code while it is required: refused, but not a wrong guess.
+	for i := 0; i < MaxFailuresPerHost+1; i++ {
+		if _, err := p.Pair("h", "", Peer{}); !errors.Is(err, ErrCodeRequired) {
+			t.Fatalf("empty code accepted or misreported: %v", err)
+		}
+	}
+	if _, err := p.Pair("h", p.Code(), Peer{}); err != nil {
+		t.Fatalf("empty attempts must not lock the host out: %v", err)
+	}
+
+	p.SetCodeRequired(false)
+	if p.CodeRequired() {
+		t.Fatal("code still required")
+	}
+	open, err := p.Pair("10.0.0.9", "", Peer{Name: "Laptop"})
+	if err != nil {
+		t.Fatalf("code off, empty code: %v", err)
+	}
+	if peer, ok := p.Authorize(open); !ok || !peer.NoCode || peer.Name != "Laptop" {
+		t.Fatalf("Authorize = %+v, %v", peer, ok)
+	}
+	withCode, err := p.Pair("10.0.0.8", p.Code(), Peer{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Switching the code back on drops tokens issued without it only.
+	p.SetCodeRequired(true)
+	if _, ok := p.Authorize(open); ok {
+		t.Fatal("token issued without a code survived switching the code on")
+	}
+	if _, ok := p.Authorize(withCode); !ok {
+		t.Fatal("token issued with the code was dropped")
+	}
+	if _, err := p.Pair("10.0.0.9", "", Peer{}); !errors.Is(err, ErrCodeRequired) {
+		t.Fatalf("code on again, empty code: %v", err)
+	}
+}

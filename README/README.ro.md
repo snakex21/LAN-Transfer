@@ -27,6 +27,7 @@ Un mic instrument portabil pentru trimiterea fișierelor și folderelor direct �
 
 - Descoperirea automată a altor calculatoare care rulează LAN Transfer (UDP broadcast, cu o scanare /24 limitată ca rezervă).
 - Asociere cu un cod de 6 cifre afișat pe destinatar. Fără asociere nu se poate trimite nimic și nu se pot răsfoi foldere.
+- Mod opțional fără cod: pe destinatar, dezactivați **Solicită codul de asociere** din Setări (salvat în `data\settings.json`) sau porniți `serve --no-code`. Atunci orice computer cu LAN Transfer din rețea îi poate trimite fișiere fără cod, tot criptat; între timp antetul afișează **Fără cod**.
 - Criptare TLS 1.3. La fiecare pornire se creează un nou certificat autosemnat; amprenta lui este fixată la asociere și verificată la fiecare conexiune.
 - Fișiere și foldere întregi, cu păstrarea structurii folderelor și până la 4 fișiere trimise în paralel.
 - Reluarea transferurilor întrerupte și verificarea SHA-256 a fiecărui fișier.
@@ -108,6 +109,7 @@ Codul poate fi transmis și prin `LANTRANSFER_CODE`. Un destinatar fără fereas
 - În timpul primei asocieri, un atacator activ din aceeași rețea (man in the middle) s-ar putea da drept destinatar. Comparați amprenta certificatului pe ambele ecrane înainte de asociere.
 - Un expeditor asociat poate răsfoi folderele destinatarului și poate salva fișiere în orice folder existent de acolo (opțiunea de destinație personalizată). Asociați doar calculatoare în care aveți încredere și folosiți **Cod nou** pentru a revoca toate asocierile.
 - Regulile de firewall nu deschid porturile în rețelele marcate ca Publice.
+- Cu **Solicită codul de asociere** dezactivat, oricine din rețea care rulează LAN Transfer poate trimite fișiere pe acest computer și îi poate răsfoi folderele fără cod, ca în versiunea 1 (dar criptat). Folosiți-l doar într-o rețea de încredere. Reactivarea codului deconectează expeditorii conectați fără el.
 
 ## Variabile de mediu
 
@@ -123,6 +125,7 @@ Acestea sunt destinate testelor și automatizării; utilizarea normală nu neces
 | `LANTRANSFER_PEER_UDP_PORTS` | porturile UDP ale altor instanțe în modul loopback |
 | `LANTRANSFER_NO_FIREWALL=1` | nu creează și nu verifică reguli de firewall |
 | `LANTRANSFER_PIN`, `LANTRANSFER_CODE` | codul fix al destinatarului, codul folosit de expeditor |
+| `LANTRANSFER_REQUIRE_CODE=0` | `0` = acest destinatar nu cere cod de asociere, `1` = cod obligatoriu; are prioritate față de setare |
 
 ## Compilare și teste
 

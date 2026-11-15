@@ -28,7 +28,7 @@ jobs:
       - name: build
         shell: bash
         run: |
-          V="-X lantransfer/internal/version.Version=2.1.0-ci.${GITHUB_RUN_NUMBER}"
+          V="-X lantransfer/internal/version.Version=2.2.0-ci.${GITHUB_RUN_NUMBER}"
           go build -trimpath -ldflags="-s -w $V -H windowsgui" -o LANTransfer.exe .
           go build -trimpath -ldflags="-s -w $V" -o LANTransferCLI.exe .
           ./LANTransferCLI.exe version

@@ -27,6 +27,7 @@ Ett litet portabelt verktyg för att skicka filer och mappar direkt mellan två 
 
 - Automatisk identifiering av andra datorer som kör LAN Transfer (UDP-broadcast, med en begränsad /24-skanning som reserv).
 - Parkoppling med en 6-siffrig kod som visas på mottagaren. Utan parkoppling går det inte att skicka något eller bläddra i några mappar.
+- Valfritt läge utan kod: stäng av **Kräv parkopplingskod** i Inställningar på mottagaren (sparas i `data\settings.json`) eller starta `serve --no-code`. Då kan alla datorer med LAN Transfer i nätverket skicka dit utan kod, fortfarande krypterat; rubriken visar då **Utan kod**.
 - TLS 1.3-kryptering. Varje körning skapar ett nytt självsignerat certifikat; dess fingeravtryck fästs (pinning) vid parkopplingen och kontrolleras vid varje anslutning.
 - Filer och hela mappar, med bevarad mappstruktur och upp till 4 filer som skickas parallellt.
 - Återupptagning av avbrutna överföringar och SHA-256-kontroll av varje fil.
@@ -108,6 +109,7 @@ Koden kan också anges i `LANTRANSFER_CODE`. En mottagare utan fönster kan anv�
 - Vid den första parkopplingen kan en aktiv angripare i samma nätverk (man-in-the-middle) utge sig för att vara mottagaren. Jämför certifikatets fingeravtryck på båda skärmarna innan du parkopplar.
 - En parkopplad avsändare kan bläddra i mottagarens mappar och spara filer i valfri befintlig mapp där (alternativet för anpassat mål). Parkoppla bara datorer du litar på och använd **Ny kod** för att återkalla alla parkopplingar.
 - Brandväggsreglerna öppnar inte portarna i nätverk som är markerade som Offentliga.
+- När **Kräv parkopplingskod** är avstängt kan alla i nätverket som kör LAN Transfer skicka filer till den här datorn och bläddra i dess mappar utan kod, som i version 1 (men krypterat). Använd det bara i ett nätverk du litar på. När koden slås på igen kopplas avsändare utan kod bort.
 
 ## Miljövariabler
 
@@ -123,6 +125,7 @@ Dessa är avsedda för tester och automatisering; vid normal användning behövs
 | `LANTRANSFER_PEER_UDP_PORTS` | UDP-portar för andra instanser i loopback-läge |
 | `LANTRANSFER_NO_FIREWALL=1` | skapa eller kontrollera inte brandväggsregler |
 | `LANTRANSFER_PIN`, `LANTRANSFER_CODE` | mottagarens fasta kod, kod som avsändaren använder |
+| `LANTRANSFER_REQUIRE_CODE=0` | `0` = den här mottagaren kräver ingen parkopplingskod, `1` = kod krävs; går före inställningen |
 
 ## Bygga och testa
 

@@ -15,8 +15,22 @@ import (
 const announceInterval = 2 * time.Second
 
 // Responder answers discovery probes and periodically announces this instance.
+// Info is read for every announcement, so a changed setting (pairing code on
+// or off) is visible to others within one announce interval.
 type Responder struct {
-	Info protocol.Info
+	Info func() protocol.Info
+}
+
+func (r Responder) payload() []byte {
+	info := r.Info()
+	payload, err := devicePayload(model.Device{
+		ID: info.ID, Name: info.Name, Port: info.Port,
+		Protocol: info.Protocol, Fingerprint: info.Fingerprint, NoCode: info.NoCode,
+	})
+	if err != nil {
+		log.Println("discovery payload:", err)
+	}
+	return payload
 }
 
 // Run blocks forever (until the UDP socket fails to open).
@@ -28,17 +42,10 @@ func (r Responder) Run() {
 	}
 	defer conn.Close()
 
-	payload, err := devicePayload(model.Device{
-		ID: r.Info.ID, Name: r.Info.Name, Port: r.Info.Port,
-		Protocol: r.Info.Protocol, Fingerprint: r.Info.Fingerprint,
-	})
-	if err != nil {
-		log.Println("discovery payload:", err)
-		return
-	}
-
+	selfID := r.Info().ID
 	go func() {
 		announce := func() {
+			payload := r.payload()
 			for _, addr := range probeTargets() {
 				_, _ = conn.WriteToUDP(payload, addr)
 			}
@@ -58,10 +65,10 @@ func (r Responder) Run() {
 			continue
 		}
 		if string(buf[:n]) == discoverMessage {
-			_, _ = conn.WriteToUDP(payload, remote)
+			_, _ = conn.WriteToUDP(r.payload(), remote)
 			continue
 		}
-		if device, ok := parseAnnouncement(buf[:n], remote.IP, r.Info.ID); ok {
+		if device, ok := parseAnnouncement(buf[:n], remote.IP, selfID); ok {
 			rememberDevice(device)
 		}
 	}

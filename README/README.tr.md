@@ -27,6 +27,7 @@ Aynı yerel ağdaki iki bilgisayar arasında dosya ve klasörleri doğrudan gön
 
 - LAN Transfer çalıştıran diğer bilgisayarların otomatik olarak bulunması (UDP broadcast; yedek olarak hızı sınırlandırılmış bir /24 taraması).
 - Alıcıda gösterilen 6 haneli kodla eşleştirme. Eşleştirme olmadan hiçbir şey gönderilemez ve hiçbir klasöre göz atılamaz.
+- Kodsuz isteğe bağlı mod: alıcıda Ayarlar'dan **Eşleştirme kodu iste** seçeneğini kapatın (`data\settings.json` içine kaydedilir) veya `serve --no-code` ile başlatın. Böylece ağdaki LAN Transfer çalıştıran her bilgisayar ona kodsuz gönderebilir, yine şifreli; bu sırada başlıkta **Kodsuz** görünür.
 - TLS 1.3 şifreleme. Her çalıştırmada yeni, kendinden imzalı bir sertifika oluşturulur; parmak izi eşleştirme sırasında sabitlenir ve her bağlantıda denetlenir.
 - Klasör yapısı korunarak dosyalar ve klasörlerin tamamı; aynı anda en fazla 4 dosya paralel gönderilir.
 - Yarıda kalan aktarımların devam ettirilmesi ve her dosyanın SHA-256 ile denetlenmesi.
@@ -108,6 +109,7 @@ Kod `LANTRANSFER_CODE` ile de verilebilir. Penceresiz bir alıcı, `LANTRANSFER_
 - İlk eşleştirme sırasında aynı ağdaki aktif bir saldırgan (ortadaki adam, man in the middle) kendini alıcı gibi gösterebilir. Eşleştirmeden önce sertifika parmak izini her iki ekranda karşılaştırın.
 - Eşleştirilmiş bir gönderici, alıcının klasörlerine göz atabilir ve oradaki mevcut herhangi bir klasöre dosya kaydedebilir (özel hedef seçeneği). Yalnızca güvendiğiniz bilgisayarları eşleştirin ve tüm eşleştirmeleri iptal etmek için **Yeni kod** düğmesini kullanın.
 - Güvenlik duvarı kuralları, Ortak olarak işaretlenmiş ağlarda portları açmaz.
+- **Eşleştirme kodu iste** kapalıyken ağda LAN Transfer çalıştıran herkes bu bilgisayara kodsuz dosya gönderebilir ve klasörlerine göz atabilir; sürüm 1'deki gibi (ama şifreli). Yalnızca güvendiğiniz bir ağda kullanın. Kodu yeniden açmak, kodsuz bağlanan göndericilerin bağlantısını keser.
 
 ## Ortam değişkenleri
 
@@ -123,6 +125,7 @@ Bunlar testler ve otomasyon için tasarlanmıştır; normal kullanımda hiçbiri
 | `LANTRANSFER_PEER_UDP_PORTS` | loopback modunda diğer örneklerin UDP portları |
 | `LANTRANSFER_NO_FIREWALL=1` | güvenlik duvarı kurallarını oluşturma veya denetleme |
 | `LANTRANSFER_PIN`, `LANTRANSFER_CODE` | alıcının sabit kodu, göndericinin kullandığı kod |
+| `LANTRANSFER_REQUIRE_CODE=0` | `0` = bu alıcı eşleştirme kodu istemez, `1` = kod gerekli; ayarın önüne geçer |
 
 ## Derleme ve testler
 

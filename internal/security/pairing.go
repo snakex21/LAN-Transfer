@@ -27,6 +27,9 @@ const (
 var (
 	ErrWrongCode = i18n.New("err.wrongCode")
 	ErrLocked    = i18n.New("err.locked")
+	// ErrCodeRequired answers a request without a code while the receiver
+	// requires one. It is not counted as a wrong guess.
+	ErrCodeRequired = i18n.New("err.codeRequired")
 )
 
 // Peer describes a sender that proved knowledge of the pairing code.
@@ -35,6 +38,8 @@ type Peer struct {
 	Name     string    `json:"name"`
 	Address  string    `json:"address"`
 	PairedAt time.Time `json:"paired_at"`
+	// NoCode marks a token issued while the code was switched off.
+	NoCode bool `json:"no_code,omitempty"`
 }
 
 // Pairing issues bearer tokens to peers that present the current pairing code.
@@ -43,6 +48,7 @@ type Pairing struct {
 	mu          sync.Mutex
 	code        string
 	fixedCode   bool
+	open        bool // code switched off: every sender gets a token
 	tokens      map[string]Peer
 	failures    map[string]int
 	lockedUntil map[string]time.Time
@@ -82,12 +88,43 @@ func (p *Pairing) OnRotate(fn func()) {
 	p.mu.Unlock()
 }
 
-// Pair checks code and returns a fresh token for the peer.
+// CodeRequired reports whether senders must present the pairing code.
+func (p *Pairing) CodeRequired() bool {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	return !p.open
+}
+
+// SetCodeRequired switches the pairing code on or off. With the code off any
+// LAN Transfer sender on the network gets a token without a code (the 1.x
+// behaviour, now over TLS). Switching it back on drops those tokens.
+func (p *Pairing) SetCodeRequired(required bool) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if required && p.open {
+		for token, peer := range p.tokens {
+			if peer.NoCode {
+				delete(p.tokens, token)
+			}
+		}
+	}
+	p.open = !required
+}
+
+// Pair checks code and returns a fresh token for the peer. While the code is
+// switched off every request succeeds.
 func (p *Pairing) Pair(host, code string, peer Peer) (string, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
 	now := p.now()
+	if p.open {
+		peer.NoCode = subtle.ConstantTimeCompare([]byte(normalizeCode(code)), []byte(p.code)) != 1
+		return p.issueLocked(host, peer, now), nil
+	}
+	if normalizeCode(code) == "" {
+		return "", ErrCodeRequired
+	}
 	if until, ok := p.lockedUntil[host]; ok {
 		if now.Before(until) {
 			return "", ErrLocked
@@ -107,6 +144,11 @@ func (p *Pairing) Pair(host, code string, peer Peer) (string, error) {
 		return "", ErrWrongCode
 	}
 	delete(p.failures, host)
+	peer.NoCode = false
+	return p.issueLocked(host, peer, now), nil
+}
+
+func (p *Pairing) issueLocked(host string, peer Peer, now time.Time) string {
 	if len(p.tokens) >= MaxPeers {
 		p.evictOldestLocked()
 	}
@@ -114,7 +156,7 @@ func (p *Pairing) Pair(host, code string, peer Peer) (string, error) {
 	peer.Address = host
 	peer.PairedAt = now
 	p.tokens[token] = peer
-	return token, nil
+	return token
 }
 
 // Authorize returns the peer that owns token.

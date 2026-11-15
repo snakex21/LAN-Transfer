@@ -27,6 +27,7 @@ Małe, przenośne narzędzie do przesyłania plików i folderów bezpośrednio m
 
 - Automatyczne wykrywanie innych komputerów z uruchomionym LAN Transfer (rozgłoszenia UDP, a awaryjnie skanowanie podsieci /24 z ograniczonym tempem).
 - Parowanie za pomocą 6-cyfrowego kodu wyświetlanego na odbiorcy. Bez sparowania nie można niczego wysłać ani przeglądać folderów.
+- Opcjonalny tryb bez kodu: na odbiorcy wyłącz **Wymagaj kodu parowania** w Ustawieniach (zapisywane w `data\settings.json`) albo uruchom `serve --no-code`. Wtedy każdy komputer z LAN Transfer w sieci może wysyłać do niego bez kodu, nadal szyfrowanie; w nagłówku widać wtedy plakietkę **Bez kodu**.
 - Szyfrowanie TLS 1.3. Każde uruchomienie tworzy nowy certyfikat z podpisem własnym; jego odcisk jest przypinany podczas parowania i sprawdzany przy każdym połączeniu.
 - Pliki i całe foldery, z zachowaniem struktury folderów i wysyłaniem do 4 plików równolegle.
 - Wznawianie przerwanych transferów i weryfikacja SHA-256 każdego pliku.
@@ -108,6 +109,7 @@ Kod można też przekazać w zmiennej `LANTRANSFER_CODE`. Odbiorca bez okna moż
 - Podczas pierwszego parowania aktywny atakujący w tej samej sieci (atak typu man in the middle) mógłby podszyć się pod odbiorcę. Przed sparowaniem porównaj odcisk certyfikatu na obu ekranach.
 - Sparowany nadawca może przeglądać foldery odbiorcy i zapisywać pliki w dowolnym istniejącym tam folderze (opcja własnego miejsca docelowego). Paruj tylko komputery, którym ufasz, a wszystkie parowania odwołasz przyciskiem **Nowy kod**.
 - Reguły zapory nie otwierają portów w sieciach oznaczonych jako publiczne.
+- Przy wyłączonym **Wymagaj kodu parowania** każdy w sieci, kto ma LAN Transfer, może wysyłać pliki na ten komputer i przeglądać jego foldery bez kodu, jak w wersji 1 (ale z szyfrowaniem). Używaj tego tylko w zaufanej sieci. Ponowne włączenie kodu rozłącza nadawców połączonych bez niego.
 
 ## Zmienne środowiskowe
 
@@ -123,6 +125,7 @@ Są przeznaczone do testów i automatyzacji; przy normalnym użytkowaniu żadna 
 | `LANTRANSFER_PEER_UDP_PORTS` | porty UDP innych instancji w trybie loopback |
 | `LANTRANSFER_NO_FIREWALL=1` | nie twórz ani nie sprawdzaj reguł zapory |
 | `LANTRANSFER_PIN`, `LANTRANSFER_CODE` | stały kod odbiorcy, kod używany przez nadawcę |
+| `LANTRANSFER_REQUIRE_CODE=0` | `0` = ten odbiorca nie wymaga kodu parowania, `1` = kod wymagany; ma pierwszeństwo przed ustawieniem |
 
 ## Budowanie i testy
 

@@ -30,7 +30,7 @@ func Start(state *app.State) (*http.Server, error) {
 		return nil, err
 	}
 	server := NewServer(state)
-	go discovery.Responder{Info: state.Info()}.Run()
+	go discovery.Responder{Info: state.Info}.Run()
 	go func() {
 		if err := server.ServeTLS(listener, "", ""); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			_ = listener.Close()
@@ -45,7 +45,7 @@ func Run(state *app.State) error {
 	if err != nil {
 		return err
 	}
-	go discovery.Responder{Info: state.Info()}.Run()
+	go discovery.Responder{Info: state.Info}.Run()
 	return NewServer(state).ServeTLS(listener, "", "")
 }
 
@@ -97,6 +97,8 @@ func pairHandler(state *app.State) http.HandlerFunc {
 		switch {
 		case errors.Is(err, security.ErrLocked):
 			transfer.WriteError(w, http.StatusTooManyRequests, "locked", i18n.MsgOf(err))
+		case errors.Is(err, security.ErrCodeRequired):
+			transfer.WriteError(w, http.StatusForbidden, protocol.CodeCodeRequired, i18n.MsgOf(err))
 		case err != nil:
 			transfer.WriteError(w, http.StatusForbidden, "wrong_code", i18n.MsgOf(err))
 		default:

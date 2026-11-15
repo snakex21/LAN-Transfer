@@ -169,6 +169,10 @@ dialog p{margin-bottom:14px}
 .field{display:block;margin:4px 0 6px;color:var(--text-secondary);font-size:13px}
 select{width:100%;padding:9px 11px;border-radius:9px;border:1px solid var(--border-strong);background:var(--bg-input);color:var(--text-primary)}
 .field-hint{margin:8px 0 4px}
+.check{display:flex;align-items:center;gap:8px;cursor:pointer}
+.check input{flex:0 0 auto;width:16px;height:16px;padding:0;accent-color:var(--accent)}
+.field-check{margin-top:16px;padding-top:12px;border-top:1px solid var(--border)}
+.receive-main .label .badge{margin-inline-start:6px;text-transform:none;letter-spacing:0}
 .toasts{position:fixed;inset-inline-end:18px;bottom:18px;display:grid;gap:8px;z-index:50;max-width:min(420px,90vw)}
 .toast{padding:11px 14px;border-radius:11px;background:var(--bg-tertiary);border:1px solid var(--border-strong);box-shadow:0 10px 25px #0008;font-size:13px;animation:slide .2s ease-out}
 .toast.error{border-color:rgba(255,82,82,.6)}

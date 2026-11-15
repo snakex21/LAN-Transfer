@@ -27,6 +27,7 @@ Pieni siirrettävä työkalu tiedostojen ja kansioiden lähettämiseen suoraan k
 
 - Muiden LAN Transferia käyttävien tietokoneiden automaattinen löytäminen (UDP-yleislähetys, varalla rajoitettu /24-skannaus).
 - Pariliitos vastaanottajan näyttämällä 6-numeroisella koodilla. Ilman pariliitosta mitään ei voi lähettää eikä kansioita voi selata.
+- Valinnainen tila ilman koodia: poista vastaanottajan asetuksista **Vaadi pariliitoskoodi** (tallennetaan tiedostoon `data\settings.json`) tai käynnistä `serve --no-code`. Silloin mikä tahansa verkon LAN Transfer -tietokone voi lähettää sille ilman koodia, edelleen salattuna; otsikossa näkyy silloin **Ei koodia**.
 - TLS 1.3 -salaus. Jokainen käynnistyskerta luo uuden itse allekirjoitetun varmenteen; sen sormenjälki kiinnitetään (pinning) pariliitoksen aikana ja tarkistetaan jokaisen yhteyden yhteydessä.
 - Tiedostot ja kokonaiset kansiot kansiorakenne säilyttäen, enintään 4 tiedostoa lähetetään rinnakkain.
 - Keskeytyneiden siirtojen jatkaminen ja jokaisen tiedoston SHA-256-tarkistus.
@@ -108,6 +109,7 @@ Koodin voi antaa myös muuttujassa `LANTRANSFER_CODE`. Ilman ikkunaa toimiva vas
 - Ensimmäisen pariliitoksen aikana samassa verkossa oleva aktiivinen hyökkääjä (man-in-the-middle) voisi esiintyä vastaanottajana. Vertaa varmenteen sormenjälkeä molemmilla näytöillä ennen pariliitoksen muodostamista.
 - Pariliitetty lähettäjä voi selata vastaanottajan kansioita ja tallentaa tiedostoja mihin tahansa siellä olemassa olevaan kansioon (mukautetun kohteen asetus). Muodosta pariliitos vain luotettujen tietokoneiden kanssa ja peruuta kaikki pariliitokset toiminnolla **Uusi koodi**.
 - Palomuurisäännöt eivät avaa portteja verkoissa, jotka on merkitty julkisiksi.
+- Kun **Vaadi pariliitoskoodi** on pois päältä, kuka tahansa verkossa LAN Transferia käyttävä voi lähettää tiedostoja tähän tietokoneeseen ja selata sen kansioita ilman koodia, kuten versiossa 1 (mutta salattuna). Käytä tätä vain luotetussa verkossa. Koodin ottaminen uudelleen käyttöön katkaisee ilman koodia yhdistetyt lähettäjät.
 
 ## Ympäristömuuttujat
 
@@ -123,6 +125,7 @@ Nämä on tarkoitettu testaukseen ja automaatioon; tavallisessa käytössä mit�
 | `LANTRANSFER_PEER_UDP_PORTS` | muiden instanssien UDP-portit loopback-tilassa |
 | `LANTRANSFER_NO_FIREWALL=1` | älä luo tai tarkista palomuurisääntöjä |
 | `LANTRANSFER_PIN`, `LANTRANSFER_CODE` | vastaanottajan kiinteä koodi, lähettäjän käyttämä koodi |
+| `LANTRANSFER_REQUIRE_CODE=0` | `0` = tämä vastaanottaja ei vaadi pariliitoskoodia, `1` = koodi vaaditaan; ohittaa asetuksen |
 
 ## Kääntäminen ja testit
 

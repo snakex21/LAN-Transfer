@@ -27,6 +27,7 @@ Malý prenosný nástroj na posielanie súborov a priečinkov priamo medzi dvoma
 
 - Automatické vyhľadávanie ďalších počítačov so spusteným LAN Transfer (UDP broadcast a ako záloha spomalené skenovanie /24).
 - Párovanie pomocou 6-miestneho kódu zobrazeného na príjemcovi. Bez spárovania nie je možné nič odoslať ani prehliadať priečinky.
+- Voliteľný režim bez kódu: na príjemcovi vypnite v Nastaveniach **Vyžadovať párovací kód** (uloží sa do `data\settings.json`) alebo spustite `serve --no-code`. Potom mu môže každý počítač s LAN Transfer v sieti posielať súbory bez kódu, stále šifrovane; hlavička medzitým ukazuje **Bez kódu**.
 - Šifrovanie TLS 1.3. Pri každom spustení sa vytvorí nový certifikát podpísaný sám sebou; jeho odtlačok sa pri párovaní pripne a overuje sa pri každom pripojení.
 - Súbory aj celé priečinky so zachovanou štruktúrou priečinkov a až 4 súbormi odosielanými paralelne.
 - Obnovenie prerušených prenosov a kontrola SHA-256 každého súboru.
@@ -108,6 +109,7 @@ Kód možno odovzdať aj v premennej `LANTRANSFER_CODE`. Príjemca bez okna mô�
 - Počas prvého párovania by sa aktívny útočník v tej istej sieti (man in the middle) mohol vydávať za príjemcu. Pred spárovaním porovnajte odtlačok certifikátu na oboch obrazovkách.
 - Spárovaný odosielateľ môže prehliadať priečinky príjemcu a ukladať súbory do ľubovoľného existujúceho priečinka na ňom (možnosť vlastného cieľa). Spárujte iba počítače, ktorým dôverujete, a na zrušenie všetkých spárovaní použite **Nový kód**.
 - Pravidlá brány firewall neotvárajú porty v sieťach označených ako Verejná.
+- Pri vypnutom **Vyžadovať párovací kód** môže ktokoľvek v sieti s LAN Transfer posielať súbory do tohto počítača a prehliadať jeho priečinky bez kódu, ako vo verzii 1 (ale šifrovane). Používajte to len v dôveryhodnej sieti. Opätovné zapnutie kódu odpojí odosielateľov pripojených bez neho.
 
 ## Premenné prostredia
 
@@ -123,6 +125,7 @@ Sú určené na testy a automatizáciu; pri bežnom používaní nie je potrebn�
 | `LANTRANSFER_PEER_UDP_PORTS` | UDP porty ďalších inštancií v režime loopback |
 | `LANTRANSFER_NO_FIREWALL=1` | nevytvárať ani nekontrolovať pravidlá brány firewall |
 | `LANTRANSFER_PIN`, `LANTRANSFER_CODE` | pevný kód príjemcu, kód používaný odosielateľom |
+| `LANTRANSFER_REQUIRE_CODE=0` | `0` = tento príjemca nevyžaduje párovací kód, `1` = kód vyžadovaný; má prednosť pred nastavením |
 
 ## Zostavenie a testy
 

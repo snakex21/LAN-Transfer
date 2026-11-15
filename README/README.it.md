@@ -27,6 +27,7 @@ Un piccolo strumento portatile per inviare file e cartelle direttamente tra due 
 
 - Rilevamento automatico degli altri computer su cui è in esecuzione LAN Transfer (broadcast UDP, con una scansione a velocità limitata della rete /24 come ripiego).
 - Abbinamento tramite un codice di 6 cifre mostrato sul destinatario. Senza abbinamento non è possibile inviare nulla né sfogliare le cartelle.
+- Modalità facoltativa senza codice: sul destinatario disattiva **Richiedi il codice di associazione** nelle Impostazioni (salvato in `data\settings.json`) oppure avvia `serve --no-code`. Qualsiasi computer con LAN Transfer sulla rete può allora inviargli file senza codice, sempre cifrati; nel frattempo l'intestazione mostra **Senza codice**.
 - Cifratura TLS 1.3. Ogni avvio crea un nuovo certificato autofirmato; la sua impronta viene fissata (pinning) durante l'abbinamento e verificata a ogni connessione.
 - File e intere cartelle, con la struttura delle cartelle preservata e fino a 4 file inviati in parallelo.
 - Ripresa dei trasferimenti interrotti e verifica SHA-256 di ogni file.
@@ -108,6 +109,7 @@ Il codice può anche essere passato in `LANTRANSFER_CODE`. Un destinatario senza
 - Durante il primo abbinamento, un attaccante attivo sulla stessa rete (man in the middle) potrebbe spacciarsi per il destinatario. Prima di associare, confronta l'impronta del certificato su entrambi gli schermi.
 - Un mittente associato può sfogliare le cartelle del destinatario e salvare file in qualsiasi cartella esistente su di esso (l'opzione di destinazione personalizzata). Associa solo computer di cui ti fidi e usa **Nuovo codice** per revocare tutti gli abbinamenti.
 - Le regole del firewall non aprono le porte sulle reti classificate come Pubbliche.
+- Con **Richiedi il codice di associazione** disattivato, chiunque sulla rete usi LAN Transfer può inviare file a questo computer e sfogliarne le cartelle senza codice, come nella versione 1 (ma cifrato). Usalo solo su una rete fidata. Riattivando il codice si disconnettono i mittenti collegati senza di esso.
 
 ## Variabili d'ambiente
 
@@ -123,6 +125,7 @@ Sono pensate per test e automazione; l'uso normale non ne richiede nessuna.
 | `LANTRANSFER_PEER_UDP_PORTS` | porte UDP di altre istanze in modalità loopback |
 | `LANTRANSFER_NO_FIREWALL=1` | non creare né controllare le regole del firewall |
 | `LANTRANSFER_PIN`, `LANTRANSFER_CODE` | codice fisso del destinatario, codice usato dal mittente |
+| `LANTRANSFER_REQUIRE_CODE=0` | `0` = questo destinatario non richiede il codice di associazione, `1` = codice richiesto; prevale sull'impostazione |
 
 ## Compilazione e test
 

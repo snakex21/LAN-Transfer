@@ -27,6 +27,7 @@ Một công cụ di động nhỏ gọn để gửi tệp và thư mục trực 
 
 - Tự động phát hiện các máy tính khác đang chạy LAN Transfer (UDP broadcast, kèm cơ chế quét dải /24 có giới hạn tốc độ làm phương án dự phòng).
 - Ghép nối bằng mã 6 chữ số hiển thị trên máy nhận. Khi chưa ghép nối thì không thể gửi bất cứ thứ gì và không thể duyệt bất kỳ thư mục nào.
+- Chế độ tùy chọn không cần mã: trên máy nhận, tắt **Yêu cầu mã ghép nối** trong Cài đặt (lưu trong `data\settings.json`) hoặc chạy `serve --no-code`. Khi đó mọi máy tính chạy LAN Transfer trong mạng đều có thể gửi đến mà không cần mã, vẫn được mã hóa; trong lúc đó tiêu đề hiển thị **Không cần mã**.
 - Mã hóa TLS 1.3. Mỗi lần chạy, chương trình tạo một chứng chỉ tự ký mới; dấu vân tay của chứng chỉ được ghim khi ghép nối và được kiểm tra ở mọi kết nối.
 - Gửi tệp và cả thư mục, giữ nguyên cấu trúc thư mục, tối đa 4 tệp được gửi song song.
 - Tiếp tục các lần truyền bị gián đoạn và kiểm tra SHA-256 cho từng tệp.
@@ -108,6 +109,7 @@ Mã cũng có thể được truyền qua `LANTRANSFER_CODE`. Máy nhận không
 - Trong lần ghép nối đầu tiên, một kẻ tấn công chủ động trên cùng mạng (man in the middle) có thể giả làm máy nhận. Hãy so sánh dấu vân tay chứng chỉ trên cả hai màn hình trước khi ghép nối.
 - Một máy gửi đã ghép nối có thể duyệt các thư mục của máy nhận và lưu tệp vào bất kỳ thư mục hiện có nào ở đó (tùy chọn nơi đến tùy chỉnh). Chỉ ghép nối các máy tính bạn tin tưởng, và dùng **Mã mới** để thu hồi tất cả các ghép nối.
 - Các quy tắc tường lửa không mở cổng trên các mạng được đánh dấu là Công cộng.
+- Khi **Yêu cầu mã ghép nối** tắt, bất kỳ ai trong mạng chạy LAN Transfer đều có thể gửi tệp đến máy tính này và duyệt thư mục của nó mà không cần mã, như ở phiên bản 1 (nhưng được mã hóa). Chỉ dùng trong mạng bạn tin cậy. Bật lại mã sẽ ngắt kết nối những người gửi đã kết nối không cần mã.
 
 ## Biến môi trường
 
@@ -123,6 +125,7 @@ Các biến này dành cho kiểm thử và tự động hóa; khi sử dụng b
 | `LANTRANSFER_PEER_UDP_PORTS` | cổng UDP của các instance khác trong chế độ loopback |
 | `LANTRANSFER_NO_FIREWALL=1` | không tạo và không kiểm tra quy tắc tường lửa |
 | `LANTRANSFER_PIN`, `LANTRANSFER_CODE` | mã cố định của máy nhận, mã được máy gửi sử dụng |
+| `LANTRANSFER_REQUIRE_CODE=0` | `0` = máy nhận này không cần mã ghép nối, `1` = bắt buộc có mã; ưu tiên hơn cài đặt |
 
 ## Biên dịch và kiểm thử
 

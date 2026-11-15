@@ -27,6 +27,7 @@ A small portable tool for sending files and folders directly between two compute
 
 - Automatic discovery of other computers running LAN Transfer (UDP broadcast, with a throttled /24 scan as a fallback).
 - Pairing with a 6-digit code shown on the receiver. Without pairing nothing can be sent and no folders can be browsed.
+- Optional mode without a code: on the receiver, turn off **Require pairing code** in Settings (saved in `data\settings.json`) or start `serve --no-code`. Any LAN Transfer computer on the network can then send to it without a code, still encrypted; the header shows a **No code** badge meanwhile.
 - TLS 1.3 encryption. Each run creates a new self-signed certificate; its fingerprint is pinned during pairing and checked on every connection.
 - Files and whole folders, with the folder structure preserved and up to 4 files sent in parallel.
 - Resume of interrupted transfers and a SHA-256 check of every file.
@@ -108,6 +109,7 @@ The code can also be passed in `LANTRANSFER_CODE`. A receiver without a window c
 - During the first pairing an active attacker on the same network (man in the middle) could pretend to be the receiver. Compare the certificate fingerprint on both screens before pairing.
 - A paired sender can browse the receiver's folders and save files into any existing folder there (the custom destination option). Pair only computers you trust, and use **New code** to revoke all pairings.
 - The firewall rules do not open the ports on networks marked Public.
+- With **Require pairing code** off, anyone on the network who runs LAN Transfer can send files to this computer and browse its folders without a code, as in version 1 (but encrypted). Use it only on a network you trust. Turning the code back on disconnects senders that connected without it.
 
 ## Environment variables
 
@@ -123,6 +125,7 @@ These are meant for tests and automation; normal use needs none of them.
 | `LANTRANSFER_PEER_UDP_PORTS` | UDP ports of other instances in loopback mode |
 | `LANTRANSFER_NO_FIREWALL=1` | do not create or check firewall rules |
 | `LANTRANSFER_PIN`, `LANTRANSFER_CODE` | fixed receiver code, code used by the sender |
+| `LANTRANSFER_REQUIRE_CODE=0` | `0` = no pairing code needed on this receiver, `1` = code required; overrides the setting |
 
 ## Building and tests
 

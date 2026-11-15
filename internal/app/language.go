@@ -46,14 +46,15 @@ func resolveLanguage(env string, settings config.Settings, system []string) Lang
 func ChooseLanguage(choice string) (LanguageInfo, error) {
 	detected := i18n.FromPreferred(i18n.SystemLanguages())
 	info := LanguageInfo{Language: detected, Source: LanguageAuto, Detected: detected}
-	settings := config.Settings{LanguageSource: LanguageAuto}
+	settings := config.LoadSettings() // keep the other settings
+	settings.Language, settings.LanguageSource = "", LanguageAuto
 	if choice != LanguageAuto {
 		code := i18n.Normalize(choice)
 		if code == "" {
 			return LanguageInfo{}, i18n.New("err.unsupportedLanguage", "language", choice)
 		}
 		info.Language, info.Source = code, LanguageManual
-		settings = config.Settings{Language: code, LanguageSource: LanguageManual}
+		settings.Language, settings.LanguageSource = code, LanguageManual
 	}
 	if err := config.SaveSettings(settings); err != nil {
 		return LanguageInfo{}, i18n.Wrap(err, "err.saveSettings", "error", err)

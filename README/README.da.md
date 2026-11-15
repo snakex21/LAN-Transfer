@@ -27,6 +27,7 @@ Et lille, portabelt værktøj til at sende filer og mapper direkte mellem to com
 
 - Automatisk registrering af andre computere, der kører LAN Transfer (UDP-broadcast med en begrænset /24-scanning som reserve).
 - Parring med en 6-cifret kode, der vises på modtageren. Uden parring kan intet sendes, og ingen mapper kan gennemses.
+- Valgfri tilstand uden kode: slå **Kræv parringskode** fra under Indstillinger på modtageren (gemmes i `data\settings.json`) eller start `serve --no-code`. Så kan alle computere med LAN Transfer på netværket sende dertil uden kode, stadig krypteret; overskriften viser imens **Uden kode**.
 - TLS 1.3-kryptering. Hver kørsel opretter et nyt selvsigneret certifikat; dets fingeraftryk fastlåses (pinning) under parringen og kontrolleres ved hver forbindelse.
 - Filer og hele mapper, med mappestrukturen bevaret og op til 4 filer sendt parallelt.
 - Genoptagelse af afbrudte overførsler og SHA-256-kontrol af hver fil.
@@ -108,6 +109,7 @@ Koden kan også angives i `LANTRANSFER_CODE`. En modtager uden vindue kan bruge 
 - Under den første parring kan en aktiv angriber på det samme netværk (man-in-the-middle) udgive sig for at være modtageren. Sammenlign certifikatets fingeraftryk på begge skærme, før du parrer.
 - En parret afsender kan gennemse modtagerens mapper og gemme filer i en hvilken som helst eksisterende mappe dér (indstillingen for brugerdefineret destination). Par kun computere, du har tillid til, og brug **Ny kode** til at tilbagekalde alle parringer.
 - Firewallreglerne åbner ikke portene på netværk, der er markeret som Offentlige.
+- Når **Kræv parringskode** er slået fra, kan alle på netværket, der bruger LAN Transfer, sende filer til denne computer og gennemse dens mapper uden kode, som i version 1 (men krypteret). Brug det kun på et netværk, du stoler på. Når koden slås til igen, afbrydes afsendere uden kode.
 
 ## Miljøvariabler
 
@@ -123,6 +125,7 @@ Disse er beregnet til test og automatisering; normal brug kræver ingen af dem.
 | `LANTRANSFER_PEER_UDP_PORTS` | UDP-porte for andre instanser i loopback-tilstand |
 | `LANTRANSFER_NO_FIREWALL=1` | opret eller kontrollér ikke firewallregler |
 | `LANTRANSFER_PIN`, `LANTRANSFER_CODE` | modtagerens faste kode, kode som afsenderen bruger |
+| `LANTRANSFER_REQUIRE_CODE=0` | `0` = denne modtager kræver ingen parringskode, `1` = kode påkrævet; går forud for indstillingen |
 
 ## Bygning og test
 

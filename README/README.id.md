@@ -27,6 +27,7 @@ Alat portabel kecil untuk mengirim file dan folder secara langsung antara dua ko
 
 - Penemuan otomatis komputer lain yang menjalankan LAN Transfer (UDP broadcast, dengan pemindaian /24 yang dibatasi kecepatannya sebagai cadangan).
 - Pemasangan dengan kode 6 digit yang ditampilkan di penerima. Tanpa pemasangan, tidak ada yang bisa dikirim dan tidak ada folder yang bisa dijelajahi.
+- Mode opsional tanpa kode: di penerima, nonaktifkan **Wajibkan kode pemasangan** di Pengaturan (disimpan di `data\settings.json`) atau jalankan `serve --no-code`. Lalu komputer mana pun dengan LAN Transfer di jaringan dapat mengirim ke sana tanpa kode, tetap terenkripsi; selama itu header menampilkan **Tanpa kode**.
 - Enkripsi TLS 1.3. Setiap kali dijalankan, sertifikat swa-tanda tangan (self-signed) baru dibuat; sidik jarinya disematkan (pinned) saat pemasangan dan diperiksa pada setiap koneksi.
 - File dan seluruh folder, dengan struktur folder dipertahankan dan hingga 4 file dikirim secara paralel.
 - Melanjutkan transfer yang terputus dan pemeriksaan SHA-256 untuk setiap file.
@@ -108,6 +109,7 @@ Kode juga dapat diberikan melalui `LANTRANSFER_CODE`. Penerima tanpa jendela dap
 - Selama pemasangan pertama, penyerang aktif di jaringan yang sama (man in the middle) dapat menyamar sebagai penerima. Bandingkan sidik jari sertifikat di kedua layar sebelum memasangkan.
 - Pengirim yang sudah dipasangkan dapat menjelajahi folder penerima dan menyimpan file ke folder mana pun yang sudah ada di sana (opsi tujuan kustom). Pasangkan hanya komputer yang Anda percayai, dan gunakan **Kode baru** untuk mencabut semua pemasangan.
 - Aturan firewall tidak membuka port di jaringan yang ditandai sebagai Publik.
+- Jika **Wajibkan kode pemasangan** nonaktif, siapa pun di jaringan yang menjalankan LAN Transfer dapat mengirim file ke komputer ini dan menelusuri foldernya tanpa kode, seperti di versi 1 (tetapi terenkripsi). Gunakan hanya di jaringan tepercaya. Mengaktifkan kode lagi memutus pengirim yang terhubung tanpa kode.
 
 ## Variabel lingkungan
 
@@ -123,6 +125,7 @@ Variabel ini ditujukan untuk pengujian dan otomatisasi; penggunaan normal tidak 
 | `LANTRANSFER_PEER_UDP_PORTS` | port UDP instans lain dalam mode loopback |
 | `LANTRANSFER_NO_FIREWALL=1` | jangan membuat atau memeriksa aturan firewall |
 | `LANTRANSFER_PIN`, `LANTRANSFER_CODE` | kode tetap penerima, kode yang digunakan pengirim |
+| `LANTRANSFER_REQUIRE_CODE=0` | `0` = penerima ini tidak memerlukan kode pemasangan, `1` = kode wajib; mengesampingkan pengaturan |
 
 ## Build dan pengujian
 

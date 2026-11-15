@@ -53,14 +53,27 @@ func NewState() (*State, error) {
 		History:  history,
 		Incoming: transfer.NewIncomingTracker(history),
 	}
+	state.Pairing.SetCodeRequired(config.LoadSettings().CodeRequired())
 	state.Sender = transfer.NewManager(state.Info(), history)
 	return state, nil
+}
+
+// SetCodeRequired saves the "Require pairing code" setting in
+// data/settings.json and applies it at once.
+func (s *State) SetCodeRequired(required bool) error {
+	settings := config.LoadSettings()
+	settings.RequireCode = &required
+	if err := config.SaveSettings(settings); err != nil {
+		return err
+	}
+	s.Pairing.SetCodeRequired(required)
+	return nil
 }
 
 // Info is the public description served at /api/info and in discovery.
 func (s *State) Info() protocol.Info {
 	return protocol.Info{
 		ID: s.ID, Name: s.Name, Port: config.HTTPPort, Protocol: protocol.Version,
-		Fingerprint: s.Identity.Fingerprint,
+		Fingerprint: s.Identity.Fingerprint, NoCode: !s.Pairing.CodeRequired(),
 	}
 }

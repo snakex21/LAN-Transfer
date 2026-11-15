@@ -27,6 +27,7 @@ Un petit outil portable pour envoyer des fichiers et des dossiers directement en
 
 - Découverte automatique des autres ordinateurs exécutant LAN Transfer (diffusion UDP, avec en secours un balayage limité en débit du réseau /24).
 - Appairage avec un code à 6 chiffres affiché sur le destinataire. Sans appairage, rien ne peut être envoyé et aucun dossier ne peut être parcouru.
+- Mode facultatif sans code : sur le destinataire, désactivez **Exiger le code d'association** dans les Paramètres (enregistré dans `data\settings.json`) ou lancez `serve --no-code`. Tout ordinateur exécutant LAN Transfer sur le réseau peut alors lui envoyer des fichiers sans code, toujours chiffrés ; l'en-tête affiche alors **Sans code**.
 - Chiffrement TLS 1.3. Chaque lancement crée un nouveau certificat auto-signé ; son empreinte est épinglée lors de l'appairage et vérifiée à chaque connexion.
 - Fichiers et dossiers entiers, avec conservation de l'arborescence et envoi de jusqu'à 4 fichiers en parallèle.
 - Reprise des transferts interrompus et vérification SHA-256 de chaque fichier.
@@ -108,6 +109,7 @@ Le code peut aussi être transmis via `LANTRANSFER_CODE`. Un destinataire sans f
 - Lors du premier appairage, un attaquant actif présent sur le même réseau (attaque de l'homme du milieu) pourrait se faire passer pour le destinataire. Comparez l'empreinte du certificat sur les deux écrans avant d'appairer.
 - Un émetteur appairé peut parcourir les dossiers du destinataire et enregistrer des fichiers dans n'importe quel dossier existant sur celui-ci (option de destination personnalisée). N'appairez que des ordinateurs de confiance et utilisez **Nouveau code** pour révoquer tous les appairages.
 - Les règles de pare-feu n'ouvrent pas les ports sur les réseaux classés comme Publics.
+- Lorsque **Exiger le code d'association** est désactivé, toute personne du réseau utilisant LAN Transfer peut envoyer des fichiers à cet ordinateur et parcourir ses dossiers sans code, comme dans la version 1 (mais chiffré). À utiliser uniquement sur un réseau de confiance. Réactiver le code déconnecte les expéditeurs connectés sans lui.
 
 ## Variables d'environnement
 
@@ -123,6 +125,7 @@ Elles sont destinées aux tests et à l'automatisation ; un usage normal n'en n�
 | `LANTRANSFER_PEER_UDP_PORTS` | ports UDP des autres instances en mode loopback |
 | `LANTRANSFER_NO_FIREWALL=1` | ne pas créer ni vérifier les règles de pare-feu |
 | `LANTRANSFER_PIN`, `LANTRANSFER_CODE` | code fixe du destinataire, code utilisé par l'émetteur |
+| `LANTRANSFER_REQUIRE_CODE=0` | `0` = aucun code d'association pour ce destinataire, `1` = code requis ; prioritaire sur le paramètre |
 
 ## Compilation et tests
 

@@ -1,4 +1,4 @@
-// Windows file properties (version 2.1.0) and icon: rsrc_windows_amd64.syso is
+// Windows file properties (version 2.2.0) and icon: rsrc_windows_amd64.syso is
 // generated from winres/versioninfo.json; regenerate after a version bump.
 //
 //go:generate go run github.com/josephspurrier/goversioninfo/cmd/goversioninfo@v1.4.1 -64 -o rsrc_windows_amd64.syso winres/versioninfo.json
